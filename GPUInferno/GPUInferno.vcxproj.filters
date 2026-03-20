@@ -173,6 +173,9 @@
     <ClInclude Include="Util\idbroker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="loss\loss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda\cudaadd.cu" />
@@ -183,5 +186,6 @@
     <CudaCompile Include="cuda\cudasubtract.cu" />
     <CudaCompile Include="cuda\cudanegate.cu" />
     <CudaCompile Include="cuda\cudadivide.cu" />
+    <CudaCompile Include="cuda\cudamseloss.cu" />
   </ItemGroup>
 </Project>

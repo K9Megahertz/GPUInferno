@@ -194,6 +194,7 @@
     <ClInclude Include="GradFN\subtractbackward.h" />
     <ClInclude Include="GradFN\transposebackward.h" />
     <ClInclude Include="layers\linear.h" />
+    <ClInclude Include="loss\loss.h" />
     <ClInclude Include="Util\idbroker.h" />
     <ClInclude Include="Util\logger.h" />
     <ClInclude Include="GradFN\node.h" />
@@ -212,6 +213,7 @@
     <ClInclude Include="Util\timer.h" />
     <CudaCompile Include="cuda\cudadivide.cu" />
     <CudaCompile Include="cuda\cudamatmul.cu" />
+    <CudaCompile Include="cuda\cudamseloss.cu" />
     <CudaCompile Include="cuda\cudamultiply.cu" />
     <CudaCompile Include="cuda\cudafilltensor.cu" />
     <CudaCompile Include="cuda\cudanegate.cu" />

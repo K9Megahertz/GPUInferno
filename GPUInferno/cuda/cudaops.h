@@ -32,6 +32,8 @@ namespace Inferno {
 	template<typename AT>
 	void cuda_sum_to_shape(AT* dst_ptr, const AT* src_ptr, size_t src_numel, size_t src_rank, const std::vector<size_t>& src_shape, const std::vector<size_t>& temp_dst_strides, size_t out_numel);
 
+	template<typename AT, typename BT, typename RT>
+	void cuda_mse_loss(const AT* a, const BT* b, RT* out, size_t numel);
 
 	inline void check_cuda(cudaError_t err, const char* msg) {
 		if (err != cudaSuccess) {			
