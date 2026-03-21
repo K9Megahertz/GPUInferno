@@ -130,6 +130,92 @@ namespace Inferno {
         size_t);
 
 
+    template<typename AT, typename BT, typename RT>
+    __global__ void mse_loss_backward_kernel(
+        const AT* aptr,
+        const BT* bptr,
+        RT* gaptr,
+        RT* gbptr,
+        const RT* gout,
+        size_t numel)
+    {
+        size_t i = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
 
+        if (i < numel)
+        {
+            RT upstream = gout[0];
+            RT diff = static_cast<RT>(aptr[i]) - static_cast<RT>(bptr[i]);
+            RT grad = upstream * static_cast<RT>(2) * diff / static_cast<RT>(numel);
+
+            if (gaptr)
+                gaptr[i] = grad;
+
+            if (gbptr)
+                gbptr[i] = -grad;
+        }
+    }
+
+
+    template<typename AT, typename BT, typename RT>
+    void cuda_mse_loss_backward(
+        const AT* aptr,
+        const BT* bptr,
+        RT* gaptr,
+        RT* gbptr,
+        const RT* gout,
+        size_t numel)
+    {
+        constexpr int threads = 256;
+        int blocks = static_cast<int>((numel + threads - 1) / threads);
+
+        mse_loss_backward_kernel<AT, BT, RT> << <blocks, threads >> > (aptr, bptr, gaptr, gbptr, gout, numel);
+
+        cudaError_t err = cudaGetLastError();
+        if (err != cudaSuccess) {
+            Logger::Append(
+                Logger::LogLevel::LOGLEVEL_ERROR,
+                std::string("mse_loss_backward_kernel launch failed: ") + cudaGetErrorString(err)
+            );
+            exit(1);
+        }
+
+        cudaDeviceSynchronize();
+
+        err = cudaGetLastError();
+        if (err != cudaSuccess) {
+            Logger::Append(
+                Logger::LogLevel::LOGLEVEL_ERROR,
+                std::string("mse_loss_backward_kernel execution failed: ") + cudaGetErrorString(err)
+            );
+            exit(1);
+        }
+    }
+
+    template void cuda_mse_loss_backward<int, int, int>(
+        const int*, const int*, int*, int*, const int*, size_t);
+
+    template void cuda_mse_loss_backward<float, float, float>(
+        const float*, const float*, float*, float*, const float*, size_t);
+
+    template void cuda_mse_loss_backward<double, double, double>(
+        const double*, const double*, double*, double*, const double*, size_t);
+
+    template void cuda_mse_loss_backward<int, float, float>(
+        const int*, const float*, float*, float*, const float*, size_t);
+
+    template void cuda_mse_loss_backward<float, int, float>(
+        const float*, const int*, float*, float*, const float*, size_t);
+
+    template void cuda_mse_loss_backward<int, double, double>(
+        const int*, const double*, double*, double*, const double*, size_t);
+
+    template void cuda_mse_loss_backward<double, int, double>(
+        const double*, const int*, double*, double*, const double*, size_t);
+
+    template void cuda_mse_loss_backward<float, double, double>(
+        const float*, const double*, double*, double*, const double*, size_t);
+
+    template void cuda_mse_loss_backward<double, float, double>(
+        const double*, const float*, double*, double*, const double*, size_t);
 
 }

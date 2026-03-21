@@ -209,5 +209,6 @@
     <CudaCompile Include="cuda\cudadivide.cu" />
     <CudaCompile Include="cuda\cudamseloss.cu" />
     <CudaCompile Include="cuda\cudasigmoid.cu" />
+    <CudaCompile Include="cuda\cudasgdstep.cu" />
   </ItemGroup>
 </Project>

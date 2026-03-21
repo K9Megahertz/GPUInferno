@@ -11,7 +11,7 @@ namespace Inferno {
 	void SigmoidBackward::backward() {
 		Tensor g_out = Engine::grad_in(this, 0);
 
-		Tensor g_a = dispatchTwo(m_A.dtype(), g_out.dtype(), [&](auto TA, auto TG) {
+		Tensor g_a = dispatchTwo(m_out.dtype(), g_out.dtype(), [&](auto TA, auto TG) {
 			using AT = typename decltype(TA)::type;
 			using GT = typename decltype(TG)::type;
 			using RT = promote_t<AT, GT>;			

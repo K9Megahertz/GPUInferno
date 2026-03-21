@@ -227,6 +227,7 @@
     <CudaCompile Include="cuda\cudasigmoid.cu" />
     <CudaCompile Include="cuda\cudasubtract.cu" />
     <CudaCompile Include="cuda\cudasumtoshape.cu" />
+    <CudaCompile Include="cuda\cudasgdstep.cu" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda\cudaadd.cu">

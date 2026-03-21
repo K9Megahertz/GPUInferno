@@ -31,6 +31,7 @@ namespace Inferno {
 			}
 
 			m_weights = Tensor(dtype, weight_data, { in_features, out_features }, "weights", device);
+			std::cout << m_weights.to(Inferno::Device::cpu()) << std::endl;
 			
 		
 		
@@ -55,6 +56,7 @@ namespace Inferno {
 			}
 
 			m_biases = Tensor(dtype, bias_data, { out_features }, "biases",device);
+			std::cout << m_biases.to(Inferno::Device::cpu()) << std::endl;
 			
 
 		});

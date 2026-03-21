@@ -46,7 +46,7 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
-				//cuda_mse_loss_backward(aptr, bptr, gaptr, gbptr, gout, m_A.numel());
+				cuda_mse_loss_backward(aptr, bptr, gaptr, gbptr, gout, m_A.numel());
 				break;
 
 			default:

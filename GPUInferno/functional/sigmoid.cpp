@@ -37,7 +37,7 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
-				//cuda_sigmoid<AT>(aptr, optr, out.numel());
+				cuda_sigmoid<AT>(aptr, optr, out.numel());
 				break;
 
 			default:

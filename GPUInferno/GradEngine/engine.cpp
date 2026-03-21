@@ -40,28 +40,13 @@ namespace Inferno {
 			(*it)->backward();  // Perform the gradient accumulation for the current node							
 			count++;		
 		}
-
-		//std::vector<Tensor> out;
+		
 
 		for (Node* n : topo) {
 			n->release();
 		}
 		topo.clear();		
 		s_grad_map->clear();
-		/*//back to the future
-		if (m_backward_fn) {
-			m_backward_fn();  // Perform the gradient accumulation for the current node
-		}
-
-		// Traverse parents: convert weak_ptr to shared_ptr to temporarily access parents
-		for (auto& p : m_parents) {
-			p->backward();
-		}
-
-		//clean up
-		m_parents.clear();
-		m_backward_fn = nullptr;*/
-
 
 
 	}
@@ -104,8 +89,8 @@ namespace Inferno {
 		if (it == s_grad_map->end())
 			s_grad_map->emplace(e, grad);			
 		else
-			it->second = it->second + grad;
-			//it->second = add_nograd(it->second, grad);
+			//it->second = it->second + grad;
+			it->second = add_nograd(it->second, grad);
 	}
 
 	Tensor Engine::grad_in(Node* node, int slot)
