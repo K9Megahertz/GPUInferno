@@ -107,6 +107,51 @@ void GenerateSampleData(std::vector<std::vector<float>>& inputs, std::vector<std
 }
 
 
+class PositionalEncoding : public Inferno::Module {
+
+
+public:
+
+	PositionalEncoding(size_t context_size, size_t embed_dim) {
+
+
+
+
+		//initialize positional vectors
+		std::vector<float> pe_data(context_size * embed_dim);
+
+
+		for (size_t pos = 0; pos < context_size; ++pos) {
+			for (size_t i = 0; i < embed_dim; ++i) {
+				float exponent = 2.0f * float(i / 2) / float(embed_dim); // 2i/d_model
+				float angle = float(pos) / std::pow(10000.0f, exponent);
+
+				if (i % 2 == 0) {
+					pe_data[pos * embed_dim + i] = std::sin(angle);
+				}
+				else {
+					pe_data[pos * embed_dim + i] = std::cos(angle);
+				}
+			}
+		}
+
+
+		pe = Inferno::Tensor(Inferno::DType::Float32, std::move(pe_data), { context_size, embed_dim }, "positional-encoding");
+
+
+
+	}
+
+
+	Inferno::Tensor forward(Inferno::Tensor& x) {
+		return x + pe;
+	}
+
+	Inferno::Tensor pe;
+
+};
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -199,6 +244,8 @@ int main() {
 	
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1, 0, 1, 0, 1, 0, 1, 0, 1, 0 }, { 10 }, "target", Inferno::Device::cpu());
 	Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 10 }, "target", device);
+
+	Inferno::Tensor tokens(Inferno::DType::Int32, std::vector<int> {42, 13, 1, 0, 99, 34, 23, 78, 1, 25 }, { 10 }, "tokens", device);
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1, 0, 1, 0, 1, 0, 1, 0, 1, 0 }, { 10 }, "target", Inferno::Device::cuda(0));
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, { 10 }, "target", Inferno::Device::cuda(0));
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1}, { 1 }, "target", Inferno::Device::cuda(0));
@@ -219,11 +266,17 @@ int main() {
 	//GenerateSampleData(inputs, targets);
 
 	LoadSampleData("train-images.idx3-ubyte", "train-labels.idx1-ubyte", inputs, targets);
+
+
+
+	Inferno::Embedding embed = Inferno::Embedding(100, 1024);  //vocab_size, embed_dim
+
+	Inferno::Tensor e = embed(tokens);
 	
 
 
 
-	std::vector<int> layers({ 784,512,256,10 });
+	std::vector<int> layers({ 784,576,256,10 });
 	//std::vector<int> layers({ 100,80,40,10});
 	//std::vector<int> layers({ 1,1,1,1 });
 
@@ -236,7 +289,7 @@ int main() {
 
 	Inferno::Timer t1("matmul");
 
-	int epochs = 60;
+	int epochs = 20;
 	int loopcount = 60000;
 	for (int e = 0; e < epochs; e++) {
 		for (int i = 0; i < loopcount; i++) {

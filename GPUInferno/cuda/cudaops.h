@@ -47,6 +47,9 @@ namespace Inferno {
 	template <typename AT, typename BT>
 	void cuda_step_impl(AT* dptr, const BT* gptr, size_t N, float lr);
 
+	template <typename AT, typename BT>
+	void cuda_embedding(const BT* tptr, const AT* eptr, AT* optr, size_t num_batches, size_t seq_len, size_t embed_dim);
+
 	inline void check_cuda(cudaError_t err, const char* msg) {
 		if (err != cudaSuccess) {			
 			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string(msg) + ": " + cudaGetErrorString(err));

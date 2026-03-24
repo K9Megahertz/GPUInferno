@@ -102,6 +102,12 @@
     <ClCompile Include="tests\tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="layers\embedding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GradFN\embeddingbackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tensor.h">
@@ -224,6 +230,12 @@
     <ClInclude Include="tests\mselosstests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="layers\embedding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GradFN\embeddingbackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda\cudaadd.cu" />
@@ -237,5 +249,6 @@
     <CudaCompile Include="cuda\cudamseloss.cu" />
     <CudaCompile Include="cuda\cudasigmoid.cu" />
     <CudaCompile Include="cuda\cudasgdstep.cu" />
+    <CudaCompile Include="cuda\cudaembedding.cu" />
   </ItemGroup>
 </Project>

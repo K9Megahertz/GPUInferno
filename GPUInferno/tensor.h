@@ -6,7 +6,7 @@
 #include "tensorimpl.h"
 #include "cuda/cudaops.h"
 #include "gradengine/engine.h"
-
+#include "Util/random.h"
 
 namespace Inferno {
 
@@ -119,6 +119,17 @@ namespace Inferno {
 		exit(1);
 	}
 
+
+	/*template <typename F>
+	decltype(auto) dispatchThree(DType a, DType b, DType c, F&& fn) {
+		return dispatchOne(a, [&](auto TA) -> decltype(auto) {
+			return dispatchOne(b, [&](auto TB) -> decltype(auto) {
+				return dispatchOne(c, [&](auto TC) -> decltype(auto) {
+					return fn(TA, TB, TC);
+					});
+				});
+			});
+	}*/
 
 
 	class Tensor;
@@ -258,6 +269,49 @@ namespace Inferno {
 		}
 
 
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//
+		//  Function randn
+		//
+		//
+		//
+		//
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		template <typename T>
+		static Tensor randn(const std::vector<size_t>& shape, const std::string& name, Inferno::Device device = Inferno::Device::cpu()) {
+			// Compute total number of elements
+			int total_size = 1;
+			for (int dim : shape) {
+				total_size *= dim;
+			}
+
+			std::vector<T> data;
+			// Generate random float values using your RandomGenerator
+			if constexpr (std::is_same_v<T, float>) {
+				data = Inferno::RandomGenerator::generateRandomFloatVector(total_size, -1.0f, 1.0f);
+			}
+
+			// Generate random float values using your RandomGenerator
+			if constexpr (std::is_same_v<T, double>) {
+				data = Inferno::RandomGenerator::generateRandomDoubleVector(total_size, -0.1f, 0.1f);
+			}
+
+			// Generate random float values using your RandomGenerator
+			if constexpr (std::is_same_v<T, int>) {
+				data = Inferno::RandomGenerator::generateRandomIntVector(total_size, -0.1f, 0.1f);
+			}
+
+			// Create and return the tensor
+			return Tensor(Inferno::DType::Float32, data, shape, name, device);
+		}
+
+
+
+
+
 	private:
 
 		friend void SetImpl(Tensor& t, std::shared_ptr<TensorImpl> impl);
@@ -286,9 +340,6 @@ namespace Inferno {
 	}
 
 	
-
-
 	
-
 
 }
