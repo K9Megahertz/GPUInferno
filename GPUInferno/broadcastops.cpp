@@ -102,4 +102,82 @@ namespace Inferno {
 
 		});
 	}
+
+
+
+	Tensor scatter_add_embedding(const Tensor& embeddings, const Tensor& token_ids, const Tensor& g_out) {
+
+
+		if (token_ids.device() != embeddings.device() || g_out.device() != embeddings.device()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "scatter_add_embedding: device mismatch.");
+			exit(1);
+		}
+
+
+
+		const size_t vocab_size = embeddings.shape()[0];
+		const size_t embed_dim = embeddings.shape()[1];
+
+
+		if (g_out.shape().back() != embed_dim) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "scatter_add_embedding: g_out last dim must match embedding dim.");
+			exit(1);
+		}
+
+		// Number of token positions
+		const size_t numtokens = token_ids.numel();
+
+		// g_out should have one embedding vector per token position
+		if (g_out.numel() != numtokens * embed_dim) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "scatter_add_embedding: g_out shape does not match token_ids.shape + [embed_dim].");
+			exit(1);
+		}
+
+
+		return dispatchTwo(token_ids.dtype(), embeddings.dtype(), [&](auto TagA, auto TagB) {
+			using AT = typename decltype(TagA)::type;  //type for tokens
+			using BT = typename decltype(TagB)::type;  //type for embeddings and g_out
+
+
+			Inferno::Tensor out(embeddings.dtype(), embeddings.shape(), "EmbeddingBackward", embeddings.device());
+
+
+			auto tptr = GetImpl(token_ids)->data_as_ptr<AT>();			
+			auto gptr = GetImpl(g_out)->data_as_ptr<BT>();
+			auto optr = GetImpl(out)->data_as_ptr<BT>();
+
+
+			switch (embeddings.device().m_type) {
+
+				////////////////////////////////////////////////////
+				// CPU Code Path
+				////////////////////////////////////////////////////
+			case DeviceType::CPU:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				cpu_scatter_add_embedding(gptr, tptr, optr, embed_dim, numtokens);
+
+				break;
+
+				////////////////////////////////////////////////////
+				// CUDA Code Path
+				////////////////////////////////////////////////////
+			case DeviceType::CUDA:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				//cpu_scatter_add_embedding(dst_ptr, src_ptr, src_numel, src_rank, src_shape, temp_dst_strides, out_numel);
+				break;
+
+			default:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				exit(1);
+			}
+
+			return out;
+			
+			
+		});
+
+
+	}
+
+
 }

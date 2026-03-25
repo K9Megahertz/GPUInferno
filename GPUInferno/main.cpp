@@ -1,8 +1,8 @@
 #include "inferno.h"
 #include "tests/tests.h"
 
-//Inferno::Device device = Inferno::Device::cpu();
-Inferno::Device device = Inferno::Device::cuda(0);
+Inferno::Device device = Inferno::Device::cpu();
+//Inferno::Device device = Inferno::Device::cuda(0);
 
 
 
@@ -246,6 +246,7 @@ int main() {
 	Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 10 }, "target", device);
 
 	Inferno::Tensor tokens(Inferno::DType::Int32, std::vector<int> {42, 13, 1, 0, 99, 34, 23, 78, 1, 25 }, { 10 }, "tokens", device);
+
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1, 0, 1, 0, 1, 0, 1, 0, 1, 0 }, { 10 }, "target", Inferno::Device::cuda(0));
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, { 10 }, "target", Inferno::Device::cuda(0));
 	//Inferno::Tensor target(Inferno::DType::Float32, std::vector<float> {1}, { 1 }, "target", Inferno::Device::cuda(0));
@@ -265,7 +266,7 @@ int main() {
 
 	//GenerateSampleData(inputs, targets);
 
-	LoadSampleData("train-images.idx3-ubyte", "train-labels.idx1-ubyte", inputs, targets);
+	//LoadSampleData("train-images.idx3-ubyte", "train-labels.idx1-ubyte", inputs, targets);
 
 
 
@@ -273,9 +274,10 @@ int main() {
 
 	Inferno::Tensor e = embed(tokens);
 	
-
-
-
+	std::cout << e << std::endl;
+	
+	e.backward();	
+	
 	std::vector<int> layers({ 784,576,256,10 });
 	//std::vector<int> layers({ 100,80,40,10});
 	//std::vector<int> layers({ 1,1,1,1 });
@@ -289,8 +291,8 @@ int main() {
 
 	Inferno::Timer t1("matmul");
 
-	int epochs = 20;
-	int loopcount = 60000;
+	int epochs = 1;
+	int loopcount = 1;
 	for (int e = 0; e < epochs; e++) {
 		for (int i = 0; i < loopcount; i++) {
 

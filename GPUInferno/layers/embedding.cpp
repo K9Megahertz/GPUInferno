@@ -34,7 +34,9 @@ namespace Inferno {
     Embedding::Embedding(size_t vocab_size, size_t embed_dim, Device device, DType dtype) {
         dispatchOne(dtype, [&](auto TagA) {
             using AT = typename decltype(TagA)::type;
-            m_embeddings = Tensor::randn<AT>({ vocab_size, embed_dim }, "embedding");
+            NoGradGuard guard;
+            m_embeddings = Tensor::randn<AT>({ vocab_size, embed_dim }, "embedding") * 0.1;
+            m_embeddings = Tensor::zeroes_like(m_embeddings);
         });
         register_parameter(m_embeddings); // so optimizer will see it
     }
@@ -59,7 +61,7 @@ namespace Inferno {
         out.strides() = out.calculate_strides(out.shape());
 
         if (Inferno::grad_enabled) {
-            GetImpl(out)->gradfn() = std::make_shared<EmbeddingBackward>(token_ids);
+            GetImpl(out)->gradfn() = std::make_shared<EmbeddingBackward>(m_embeddings, token_ids);
         }
 
         

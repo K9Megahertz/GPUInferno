@@ -201,7 +201,7 @@ namespace Inferno {
 				dispatchOne(g.dtype(), [&](auto TG) {
 					using GT = typename decltype(TG)::type;
 					const GT* gptr = GetImpl(g)->data_as_ptr<GT>();
-					size_t numgrad = std::min<size_t>(g.numel(), 100);
+					size_t numgrad = std::min<size_t>(g.numel(), 2048);
 
 					for (size_t i = 0; i < numgrad; i++) {
 						os << std::fixed << std::setprecision(6) << gptr[i];

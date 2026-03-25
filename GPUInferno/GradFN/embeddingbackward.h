@@ -12,7 +12,7 @@ namespace Inferno {
 
 	public:
 
-		EmbeddingBackward(const Tensor& A);
+		EmbeddingBackward(const Tensor& A, const Tensor& B);
 		void backward() override;
 
 
@@ -22,13 +22,12 @@ namespace Inferno {
 		void release() override;
 
 
-		Tensor m_A;
+		Tensor m_token_ids;
+		Tensor m_embeddings;
 		
 
 
 	};
-
-
 
 
 
