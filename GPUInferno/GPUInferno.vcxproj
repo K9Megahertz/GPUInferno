@@ -172,6 +172,7 @@
     <ClCompile Include="GradFN\transposebackward.cpp" />
     <ClCompile Include="layers\embedding.cpp" />
     <ClCompile Include="layers\linear.cpp" />
+    <ClCompile Include="layers\module.cpp" />
     <ClCompile Include="layers\module.h" />
     <ClCompile Include="ops.cpp" />
     <ClCompile Include="tests\tests.cpp" />

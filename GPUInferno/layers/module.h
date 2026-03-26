@@ -18,7 +18,7 @@ namespace Inferno {
 		};
 
 
-		std::vector<Tensor*> parameters() {
+		std::vector<Tensor*> parameters() const {
 			std::vector<Tensor*> all_params = _parameters;
 			for (auto child : _children) {
 				auto child_params = child->parameters();
@@ -36,7 +36,9 @@ namespace Inferno {
 			_children.push_back(module);
 		}
 
+		
 
+		
 	private:
 
 		std::vector<Module*> _children;
@@ -44,6 +46,8 @@ namespace Inferno {
 
 
 	};
+
+	std::ostream& operator<<(std::ostream& os, const Module& module);
 
 
 }

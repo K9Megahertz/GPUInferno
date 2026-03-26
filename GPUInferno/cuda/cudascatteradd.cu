@@ -40,9 +40,7 @@ namespace Inferno {
 
 		constexpr int threads = 256;
 		int blocks = static_cast<int>(((embed_dim * numtokens) + threads - 1) / threads);
-
-
-		//cuda_kernel_scatter_add<AT, BT> << <blocks, threads >> > (gptr, tptr, eptr, embed_dim, numtokens);
+		cuda_kernel_scatter_add<AT, BT> << <blocks, threads >> > (gptr, tptr, eptr, embed_dim, numtokens);
 	}
 
 

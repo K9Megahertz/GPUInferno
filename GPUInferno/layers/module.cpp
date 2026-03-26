@@ -1,0 +1,14 @@
+#include "module.h"
+
+namespace Inferno {
+
+	std::ostream& operator<<(std::ostream& os, const Module& module) {
+
+		for (auto mod : module.parameters()) {
+			os << *mod << std::endl;
+		}
+
+		return os;
+	}
+
+}
