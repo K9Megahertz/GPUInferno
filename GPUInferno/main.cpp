@@ -453,12 +453,14 @@ int main() {
 	Inferno::Tensor input = Inferno::Tensor::randn(Inferno::DType::Float32, { 784 }, "input", device);	
 	Inferno::Tensor target(Inferno::DType::Float32, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 10 }, "target", device);
 	Inferno::Tensor tokens(Inferno::DType::Int32, {42, 13, 1, 0, 99, 34, 23, 78, 1, 25 }, { 10 }, "tokens", device);
-	Inferno::Tensor normfwd(Inferno::DType::Float32, std::vector<float> {0.2, 0.1, 0.3, 0.5, 0.1, 0.1}, { 2,3 }, "normfwd", device);
+	Inferno::Tensor normfwd(Inferno::DType::Float32, std::vector<float> {0.2f, 0.1f, 0.3f, 0.5f, 0.1f, 0.1f}, { 2,3 }, "normfwd", device);
+
 
 
 
 	Inferno::Tensor tensor1(Inferno::DType::Float32, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 2,3,4 }, "tensor1", device);
 	Inferno::Tensor tensor2(Inferno::DType::Float32, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 }, { 2,3,4 }, "tensor2", device);
+		
 
 	std::vector<Inferno::Tensor> list = { tensor1, tensor2 };
 

@@ -1,16 +1,15 @@
 #pragma once
-#include "node.h"
-#include "../tensor.h"
-#include "../broadcastops.h"
+#include "../util/random.h"
+#include "module.h"
 
 
 
-namespace Inferno {
+namespace  Inferno {
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Class DivideBackward 
+	//  Class Linear
 	//
 	//
 	//
@@ -18,28 +17,29 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	class DivideBackward : public Node {
+	class Linear : public Module {
 
 	public:
 
-		DivideBackward(const Tensor& A, const Tensor& B);
-		void backward() override;
+		Linear(size_t in_features, size_t out_features, Device device = Device::cpu(), DType dtype = DType::Float32 );
+		Tensor forward(const Tensor& input);
+		Tensor m_weights;
+		Tensor m_biases;
 
+		Tensor operator()(Tensor& input) {
+			return forward(input);
+		}
 
 	private:
 
-		void get_inputs(std::vector<Tensor>& out) const override;
-		void release() override;
-
-
-		Tensor m_A;
-		Tensor m_B;
+		
+		size_t m_in_features;
+		size_t m_out_features;
 
 
 	};
 
 
 
-
-
 }
+

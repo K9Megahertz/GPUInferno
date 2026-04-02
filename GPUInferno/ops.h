@@ -351,7 +351,15 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename AT, typename BT, typename RT>		
-	void cpu_matmul(const AT* aptr, const BT* bptr, RT* optr, std::vector<size_t>& a_shape, std::vector<size_t>& a_strides, std::vector<size_t>& b_shape, std::vector<size_t>& b_strides, std::vector<size_t>& out_shape) {
+	void cpu_matmul(
+		const AT* aptr,
+		const BT* bptr,
+		RT* optr,
+		std::vector<size_t>& a_shape,
+		std::vector<size_t>& a_strides,
+		std::vector<size_t>& b_shape,
+		std::vector<size_t>& b_strides,
+		std::vector<size_t>& out_shape) {
 
 
 		//At this point every thing has been appropriately padded, shapes, strides, etc...	
@@ -384,7 +392,7 @@ namespace Inferno {
 		size_t out_matrix_size = M * N;
 
 		// Total number of broadcasted batches
-		size_t total_batches = std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), 1, std::multiplies<size_t>());
+		size_t total_batches = std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 		
 		//this is to store the batch index of the current batch we are on  i.e. {0,0} or {0,1,2} or {1,1} etc...
 		std::vector<size_t> batch_idx(batch_rank, 0);
@@ -472,7 +480,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Function name
+	//  Function cpu_concat
 	//
 	//
 	//
@@ -531,7 +539,7 @@ namespace Inferno {
 				src_storage_idx += src_idx[d] * src_strides_flat[tensor_idx * rank + d];
 			}
 
-			optr[dst_storage_idx] = src_ptrs[tensor_idx][src_storage_idx];
+			optr[dst_storage_idx] = 42;// src_ptrs[tensor_idx][src_storage_idx];
 		}
 	}
 }

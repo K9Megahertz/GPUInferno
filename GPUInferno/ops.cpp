@@ -580,10 +580,10 @@ namespace Inferno {
 
 			
 		if (dima < 0)
-			dima = dima + A.ndim();
+			dima = dima + static_cast<int>(A.ndim());
 
 		if (dimb < 0)
-			dimb = dimb + A.ndim();
+			dimb = dimb + static_cast<int>(A.ndim());
 
 		std::swap(newshape[dima], newshape[dimb]);
 		std::swap(newstrides[dima], newstrides[dimb]);
@@ -731,7 +731,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Function name
+	//  Function reshape_impl
 	//
 	//
 	//
@@ -761,7 +761,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Function name
+	//  Function concat
 	//
 	//
 	//
@@ -783,10 +783,10 @@ namespace Inferno {
 		const Tensor& first = tensors[0];
 
 		//get the number of dimensions in the first tensor
-		const size_t rank = first.shape().size();
+		const size_t ndim = first.ndim();
 
 		//if there are no dimensions, error out
-		if (rank == 0) {
+		if (ndim == 0) {
 			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: scalar tensors not supported.");
 			exit(1);
 		}
@@ -794,12 +794,12 @@ namespace Inferno {
 
 		//convert negative axis specification to positive
 		if (axis < 0) {
-			axis += static_cast<int>(rank);
+			axis += static_cast<int>(ndim);
 		}
 
 
 		//verify the axis specified is within the range of the tensor
-		if (axis < 0 || axis >= static_cast<int>(rank)) {
+		if (axis < 0 || axis >= static_cast<int>(ndim)) {
 			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: axis out of bounds.");
 			exit(1);
 		}
@@ -834,13 +834,13 @@ namespace Inferno {
 			}
 
 			//current tensor rank does not match the first one
-			if (t.ndim() != rank) {
+			if (t.ndim() != ndim) {
 				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: rank mismatch.");
 				exit(1);
 			}
 
 			//make sure all the dimensions match except for the concat axis (the can be different sizes)
-			for (size_t d = 0; d < rank; ++d) {
+			for (size_t d = 0; d < ndim; ++d) {
 				if (d == static_cast<size_t>(axis)) continue;
 
 				if (t.shape()[d] != first.shape()[d]) {
@@ -875,15 +875,16 @@ namespace Inferno {
 		}
 
 		// flatten source metadata
+		// were going to save all of the shapes,strides and offsets for all the tensors and pass those to the device specific concat function
 		std::vector<size_t> src_shapes_flat;
 		std::vector<size_t> src_strides_flat;
 		std::vector<size_t> src_offsets;
-		src_shapes_flat.reserve(tensors.size() * rank);
-		src_strides_flat.reserve(tensors.size() * rank);
-		src_offsets.reserve(tensors.size());
+		src_shapes_flat.reserve(tensors.size() * ndim);    // all the shapes
+		src_strides_flat.reserve(tensors.size() * ndim);   // all the strides
+		src_offsets.reserve(tensors.size());               // all the offsets
 
 		for (const auto& t : tensors) {
-			for (size_t d = 0; d < rank; ++d) {
+			for (size_t d = 0; d < ndim; ++d) {
 				src_shapes_flat.push_back(t.shape()[d]);
 				src_strides_flat.push_back(t.strides()[d]);
 			}
@@ -902,12 +903,16 @@ namespace Inferno {
 		dispatchOne(dtype, [&](auto TagA) {
 			using AT = typename decltype(TagA)::type;
 
+
+			//save all the pointers for the source tensors
 			std::vector<const AT*> src_ptrs;
 			src_ptrs.reserve(tensors.size());
 			for (const auto& t : tensors) {
 				src_ptrs.push_back(GetImpl(t)->data_as_ptr<AT>());
 			}
 
+
+			//get the pointer of the output 
 			AT* optr = GetImpl(out)->data_as_ptr<AT>();
 
 			switch (device.m_type) {
@@ -926,7 +931,7 @@ namespace Inferno {
 					out.offset(),
 					out.numel(),
 					static_cast<size_t>(axis),
-					rank
+					ndim
 				);
 				break;
 
@@ -944,7 +949,7 @@ namespace Inferno {
 					out.offset(),
 					out.numel(),
 					static_cast<size_t>(axis),
-					rank
+					ndim
 				);
 				break;
 

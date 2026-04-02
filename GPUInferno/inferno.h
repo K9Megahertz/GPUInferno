@@ -13,10 +13,10 @@
 #include "util/random.h"
 #include "util/timer.h"
 
-#include "layers/module.h"
-#include "layers/linear.h"
-#include "layers/embedding.h"
-#include "layers/layernorm.h"
+#include "modules/module.h"
+#include "modules/linear.h"
+#include "modules/embedding.h"
+#include "modules/layernorm.h"
 
 #include "loss/loss.h"
 

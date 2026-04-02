@@ -72,10 +72,10 @@
     <ClCompile Include="GradFN\dividebackward.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="layers\module.h">
+    <ClCompile Include="modules\module.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="layers\linear.cpp">
+    <ClCompile Include="modules\linear.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Util\nodetracker.cpp">
@@ -96,16 +96,16 @@
     <ClCompile Include="tests\tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="layers\embedding.cpp">
+    <ClCompile Include="modules\embedding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GradFN\embeddingbackward.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="layers\module.cpp">
+    <ClCompile Include="modules\module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="layers\layernorm.cpp">
+    <ClCompile Include="modules\layernorm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GradFN\slicebackward.cpp">
@@ -188,7 +188,7 @@
     <ClInclude Include="GradFN\dividebackward.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="layers\linear.h">
+    <ClInclude Include="modules\linear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Util\nodetracker.h">
@@ -236,14 +236,14 @@
     <ClInclude Include="tests\mselosstests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="layers\embedding.h">
+    <ClInclude Include="modules\embedding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GradFN\embeddingbackward.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cuda\gpu_atomic.cuh" />
-    <ClInclude Include="layers\layernorm.h">
+    <ClInclude Include="modules\layernorm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cuda\cudamath.cuh" />

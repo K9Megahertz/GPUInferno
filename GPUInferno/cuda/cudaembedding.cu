@@ -6,7 +6,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Function name
+	//  Function cuda_kernel_embedding
 	//
 	//
 	//
@@ -29,26 +29,13 @@ namespace Inferno {
 			const size_t eidx = tokenid * embed_dim + offs;
 
 			optr[linear] = eptr[eidx];
-		}
-
-		//what Visual Studio Intellicode came up with
-
-		//if (linear < N) {
-
-			//const size_t batch_idx = linear / (seq_len * embed_dim);
-			//const size_t seq_idx = (linear / embed_dim) % seq_len;
-			//const size_t embed_idx = linear % embed_dim;
-			//const size_t token_idx = tptr[batch_idx * seq_len + seq_idx];
-			//optr[linear] = eptr[token_idx * embed_dim + embed_idx];
-
-		//}
-
+		}	
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Function name
+	//  Function cuda_embedding
 	//
 	//
 	//
@@ -59,10 +46,8 @@ namespace Inferno {
 	template <typename AT, typename BT>
 	void cuda_embedding(const BT* tptr, const AT* eptr, AT* optr, size_t num_batches, size_t seq_len, size_t embed_dim) {
 
-
 		constexpr int threads = 256;
 		int blocks = static_cast<int>(((num_batches * seq_len * embed_dim) + threads - 1) / threads);
-
 
 		cuda_kernel_embedding<AT, BT> << <blocks, threads >> > (tptr, eptr, optr, num_batches, seq_len, embed_dim);
 	}
@@ -71,7 +56,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	//  Function name
+	//  Explicit instantiations
 	//
 	//
 	//

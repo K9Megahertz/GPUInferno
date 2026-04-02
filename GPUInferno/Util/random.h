@@ -5,6 +5,17 @@
 
 namespace Inferno {
 
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//
+	//  Class RandomGenerator 
+	//
+	//
+	//
+	//
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	class RandomGenerator {
 
 	private:
@@ -20,13 +31,13 @@ namespace Inferno {
 		static void initializeWithSeed(unsigned int seed);
 
 		// Generate a vector of random floats
-		static std::vector<float> generateRandomFloatVector(int size, float minValue = 0.0f, float maxValue = 1.0f);
+		static std::vector<float> generateRandomFloatVector(size_t size, float minValue = 0.0f, float maxValue = 1.0f);
 
 		// Generate a vector of random doubles
-		static std::vector<double> generateRandomDoubleVector(int size, double minValue = 0.0, double maxValue = 1.0);
+		static std::vector<double> generateRandomDoubleVector(size_t size, double minValue = 0.0, double maxValue = 1.0);
 
 		// Generate a vector of random doubles
-		static std::vector<int> generateRandomIntVector(int size, int minValue = -1, int maxValue = 1);
+		static std::vector<int> generateRandomIntVector(size_t size, int minValue = -1, int maxValue = 1);
 
 		// Generate a single random float
 		static float generateRandomFloat(float minValue = 0.0f, float maxValue = 1.0f);

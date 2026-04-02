@@ -6,7 +6,7 @@ namespace  Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //  Function name
+    //  Function sgd_step_kernel
     //
     //
     //
@@ -30,7 +30,7 @@ namespace  Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //  Function name
+    //  Function cuda_step_impl
     //
     //
     //
@@ -68,7 +68,7 @@ namespace  Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //  Function name
+    //  Explicit instantiations
     //
     //
     //
@@ -76,54 +76,17 @@ namespace  Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       
-    template void cuda_step_impl<int, int>(
-        int*, const int*,
-        size_t,
-        float);
+    template void cuda_step_impl<int, int>(int*, const int*, size_t, float);
+    template void cuda_step_impl<int, float>(int*, const float*, size_t, float);
+    template void cuda_step_impl<int, double>(int*, const double*, size_t, float);
 
-    template void cuda_step_impl<int, float>(
-        int*, const float*,
-        size_t,
-        float);
+    template void cuda_step_impl<float, int>(float*, const int*, size_t, float);
+    template void cuda_step_impl<float, float>(float*, const float*, size_t, float);
+    template void cuda_step_impl<float, double>(float*, const double*,size_t, float);
 
-    template void cuda_step_impl<int, double>(
-        int*, const double*,
-        size_t,
-        float);
-
-
-
-    template void cuda_step_impl<float, int>(
-        float*, const int*,
-        size_t,
-        float);
-
-    template void cuda_step_impl<float, float>(
-        float*, const float*,
-        size_t,
-        float);
-
-    template void cuda_step_impl<float, double>(
-        float*, const double*,
-        size_t,
-        float);
-
-
-
-    template void cuda_step_impl<double, int>(
-        double*, const int*,
-        size_t,
-        float);
-
-    template void cuda_step_impl<double, float>(
-        double*, const float*,
-        size_t,
-        float);
-
-    template void cuda_step_impl<double, double>(
-        double*, const double*,
-        size_t,
-        float);
+    template void cuda_step_impl<double, int>(double*, const int*, size_t, float);
+    template void cuda_step_impl<double, float>(double*, const float*, size_t, float);
+    template void cuda_step_impl<double, double>(double*, const double*, size_t, float);
 
 
 

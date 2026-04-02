@@ -9,7 +9,7 @@ namespace Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //  Function name
+    //  CTORS / DTORS
     //
     //
     //
@@ -21,8 +21,8 @@ namespace Inferno {
         dispatchOne(dtype, [&](auto TagA) {
             using AT = typename decltype(TagA)::type;
             NoGradGuard guard; //incase we want to scale these later or something
-            m_beta = Tensor(Inferno::DType::Float32, std::vector<AT>(normalized_dim, 0.0f), { normalized_dim }, "ln_beta"); 
-            m_gamma = Tensor(Inferno::DType::Float32, std::vector<AT>(normalized_dim, 1.0f), { normalized_dim }, "ln_gamma");           
+            m_beta = Tensor(Inferno::DType::Float32, std::vector<float>(normalized_dim, 0.0f), { normalized_dim }, "ln_beta"); 
+            m_gamma = Tensor(Inferno::DType::Float32, std::vector<float>(normalized_dim, 1.0f), { normalized_dim }, "ln_gamma");           
 
             });
         register_parameter(m_beta);
@@ -34,7 +34,7 @@ namespace Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //  Function name
+    //  Function forward
     //
     //
     //
@@ -48,7 +48,7 @@ namespace Inferno {
 
 
         //strip off everything but the last dimension and multiply them together to get the number of batches
-        const size_t num_batches = std::accumulate(input.shape().begin(), input.shape().end() - 1, 1, std::multiplies<size_t>());        
+        const size_t num_batches = std::accumulate(input.shape().begin(), input.shape().end() - 1, static_cast<size_t>(1), std::multiplies<size_t>());        
 
 
         return dispatchOne(input.dtype(), [&](auto TA) {
