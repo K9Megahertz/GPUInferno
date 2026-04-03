@@ -501,15 +501,15 @@ namespace Inferno {
 		size_t out_offset,
 		size_t out_numel,
 		size_t axis,
-		size_t rank)
+		size_t ndim)
 	{
-		std::vector<size_t> out_idx(rank, 0);
-		std::vector<size_t> src_idx(rank, 0);
+		std::vector<size_t> out_idx(ndim, 0);
+		std::vector<size_t> src_idx(ndim, 0);
 
 		for (size_t linear = 0; linear < out_numel; ++linear) {
 
 			size_t tmp = linear;
-			for (int d = static_cast<int>(rank) - 1; d >= 0; --d) {
+			for (int d = static_cast<int>(ndim) - 1; d >= 0; --d) {
 				out_idx[d] = tmp % out_shape[d];
 				tmp /= out_shape[d];
 			}
@@ -519,7 +519,7 @@ namespace Inferno {
 			size_t tensor_idx = 0;
 			for (size_t i = 0; i < axis_starts.size(); ++i) {
 				size_t start = axis_starts[i];
-				size_t end = start + src_shapes_flat[i * rank + axis];
+				size_t end = start + src_shapes_flat[i * ndim + axis];
 				if (out_axis_idx >= start && out_axis_idx < end) {
 					tensor_idx = i;
 					break;
@@ -530,16 +530,16 @@ namespace Inferno {
 			src_idx[axis] -= axis_starts[tensor_idx];
 
 			size_t dst_storage_idx = out_offset;
-			for (size_t d = 0; d < rank; ++d) {
+			for (size_t d = 0; d < ndim; ++d) {
 				dst_storage_idx += out_idx[d] * out_strides[d];
 			}
 
 			size_t src_storage_idx = src_offsets[tensor_idx];
-			for (size_t d = 0; d < rank; ++d) {
-				src_storage_idx += src_idx[d] * src_strides_flat[tensor_idx * rank + d];
+			for (size_t d = 0; d < ndim; ++d) {
+				src_storage_idx += src_idx[d] * src_strides_flat[tensor_idx * ndim + d];
 			}
 
-			optr[dst_storage_idx] = 42;// src_ptrs[tensor_idx][src_storage_idx];
+			optr[dst_storage_idx] = src_ptrs[tensor_idx][src_storage_idx];
 		}
 	}
 }

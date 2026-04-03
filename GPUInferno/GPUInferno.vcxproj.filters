@@ -114,6 +114,18 @@
     <ClCompile Include="GradFN\reshapebackward.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GradFN\concatbackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="functional\softmax.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GradFN\softmaxbackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="functional\gelu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tensor.h">
@@ -251,6 +263,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GradFN\reshapebackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GradFN\concatbackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="functional\softmax.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GradFN\softmaxbackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="functional\gelu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

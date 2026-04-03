@@ -157,10 +157,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="broadcastops.cpp" />
+    <ClCompile Include="functional\gelu.cpp" />
     <ClCompile Include="functional\sigmoid.cpp" />
+    <ClCompile Include="functional\softmax.cpp" />
     <ClCompile Include="GradEngine\engine.cpp" />
     <ClCompile Include="GradFN\accumulategrad.cpp" />
     <ClCompile Include="GradFN\addbackward.cpp" />
+    <ClCompile Include="GradFN\concatbackward.cpp" />
     <ClCompile Include="GradFN\dividebackward.cpp" />
     <ClCompile Include="GradFN\embeddingbackward.cpp" />
     <ClCompile Include="GradFN\mmbackward.cpp" />
@@ -170,6 +173,7 @@
     <ClCompile Include="GradFN\reshapebackward.cpp" />
     <ClCompile Include="GradFN\sigmoidbackward.cpp" />
     <ClCompile Include="GradFN\slicebackward.cpp" />
+    <ClCompile Include="GradFN\softmaxbackward.cpp" />
     <ClCompile Include="GradFN\subtractbackward.cpp" />
     <ClCompile Include="GradFN\transposebackward.cpp" />
     <ClCompile Include="modules\embedding.cpp" />
@@ -195,6 +199,9 @@
     <ClInclude Include="cuda\cudamath.cuh" />
     <ClInclude Include="cuda\cudaops.h" />
     <ClInclude Include="cuda\gpu_atomic.cuh" />
+    <ClInclude Include="functional\gelu.h" />
+    <ClInclude Include="functional\softmax.h" />
+    <ClInclude Include="GradFN\concatbackward.h" />
     <ClInclude Include="GradFN\embeddingbackward.h" />
     <ClInclude Include="functional\sigmoid.h" />
     <ClInclude Include="GradFN\accumulategrad.h" />
@@ -207,6 +214,7 @@
     <ClInclude Include="GradFN\reshapebackward.h" />
     <ClInclude Include="GradFN\sigmoidbackward.h" />
     <ClInclude Include="GradFN\slicebackward.h" />
+    <ClInclude Include="GradFN\softmaxbackward.h" />
     <ClInclude Include="GradFN\subtractbackward.h" />
     <ClInclude Include="GradFN\transposebackward.h" />
     <ClInclude Include="modules\embedding.h" />

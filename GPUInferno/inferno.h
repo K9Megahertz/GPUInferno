@@ -21,5 +21,7 @@
 #include "loss/loss.h"
 
 #include "functional/sigmoid.h"
+#include "functional/softmax.h"
+#include "functional/gelu.h"
 
 #include "optim/optimizers.h"

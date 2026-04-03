@@ -50,10 +50,10 @@ class Logger {
 
 public:
 
-	enum class LogLevel {
-		LOGLEVEL_INFO,
-		LOGLEVEL_WARNING,
+	enum class LogLevel {		
 		LOGLEVEL_ERROR,
+		LOGLEVEL_WARNING,
+		LOGLEVEL_INFO,
 		LOGLEVEL_DEBUG
 	};
 

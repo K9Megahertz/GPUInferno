@@ -768,7 +768,7 @@ namespace Inferno {
 	std::vector<size_t> Tensor::calculate_strides(const std::vector<size_t>& shape) {
 		std::vector<size_t> strides(shape.size());
 		size_t stride = 1;
-		for (size_t i = shape.size() - 1; i >= 0; i--) {
+		for (int i = shape.size() - 1; i >= 0; i--) {
 			strides[i] = stride;
 			stride *= shape[i];
 		}

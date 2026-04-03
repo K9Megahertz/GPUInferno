@@ -1,8 +1,8 @@
 #include "inferno.h"
 #include "tests/tests.h"
 
-Inferno::Device device = Inferno::Device::cpu();
-//Inferno::Device device = Inferno::Device::cuda(0);
+//Inferno::Device device = Inferno::Device::cpu();
+Inferno::Device device = Inferno::Device::cuda(0);
 
 
 
@@ -107,7 +107,7 @@ void GenerateSampleData(std::vector<std::vector<float>>& inputs, std::vector<std
 }
 
 
-/*class PositionalEncoding : public Inferno::Module {
+class PositionalEncoding : public Inferno::Module {
 
 
 public:
@@ -138,7 +138,7 @@ public:
 
 		pe = Inferno::Tensor(Inferno::DType::Float32, std::move(pe_data), { context_size, embed_dim }, "positional-encoding");
 
-
+		register_buffer(pe);
 
 	}
 
@@ -205,7 +205,7 @@ public:
 
 			auto attn_scores = Inferno::matmul(q, k.transpose(-1, -2)) / std::sqrt(static_cast<float>(m_head_dim));
 
-			auto attn_probs = Inferno::softmax(attn_scores, -1);
+			auto attn_probs = Inferno::Softmax(attn_scores, -1);
 			auto head = Inferno::matmul(attn_probs, v);
 
 			heads.push_back(head);
@@ -309,7 +309,7 @@ public:
 		}
 
 		this->register_module(&linear1);
-		this->register_module(&layernorm1);
+		this->register_module(&layernorm1);	
 
 
 	}
@@ -365,7 +365,7 @@ public:
 
 
 
-};*/
+};
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -438,8 +438,8 @@ int main() {
 
 
 	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_ERROR);
-	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
-	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
+	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
+	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
 	Logger::Start("logs/applicationlog.txt");
 
 	Inferno::RandomGenerator::initializeWithSeed(42);
@@ -447,65 +447,57 @@ int main() {
 	
 
 	//RunTests();
+
+
+	//Quick test
+	//size_t vocabulary_size = 32;
+	//size_t context_size = 16;
+	//size_t embedding_dim = 64;
+	//size_t numheads = 2;
+	//size_t numblocks = 4;
+
+
+	//Sane
+	/*size_t vocabulary_size = 32;
+	size_t context_size = 128;
+	size_t embedding_dim = 256;
+	size_t numheads = 4;
+	size_t numblocks = 4;*/
+
+
+	//GPT 2
+	//size_t vocabulary_size = 32;
+	//size_t context_size = 1024;
+	//size_t embedding_dim = 768;
+	//size_t numheads = 12;
+	//size_t numblocks = 12;
+
+
+	//GPT 2
+	size_t vocabulary_size = 32;
+	size_t context_size = 1024;
+	size_t embedding_dim = 2048;
+	size_t numheads = 16;
+	size_t numblocks = 24;
 	
 
 		
-	Inferno::Tensor input = Inferno::Tensor::randn(Inferno::DType::Float32, { 784 }, "input", device);	
-	Inferno::Tensor target(Inferno::DType::Float32, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 10 }, "target", device);
-	Inferno::Tensor tokens(Inferno::DType::Int32, {42, 13, 1, 0, 99, 34, 23, 78, 1, 25 }, { 10 }, "tokens", device);
-	Inferno::Tensor normfwd(Inferno::DType::Float32, std::vector<float> {0.2f, 0.1f, 0.3f, 0.5f, 0.1f, 0.1f}, { 2,3 }, "normfwd", device);
-
-
-
-
-	Inferno::Tensor tensor1(Inferno::DType::Float32, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, { 2,3,4 }, "tensor1", device);
-	Inferno::Tensor tensor2(Inferno::DType::Float32, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 }, { 2,3,4 }, "tensor2", device);
-		
-
-	std::vector<Inferno::Tensor> list = { tensor1, tensor2 };
-
-	std::cout << tensor1 << std::endl;
-	std::cout << tensor2 << std::endl;
-
-	Inferno::Tensor concat = Inferno::concat(list, 2);
-
-	std::cout << concat << std::endl;
-
-	//Inferno::Embedding e = Inferno::Embedding(10, 10, device);
-
-	//Inferno::Tensor blah = e(tokens);
+	
+	Inferno::Tensor target(Inferno::DType::Float32, { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, { 1, 32 }, "target", device);
+	//Inferno::Tensor tokens(Inferno::DType::Int32, { 42, 13, 1, 0, 99, 34, 23, 78, 1, 25, 22, 45, 02, 13, 67, 88 }, { 16 }, "tokens", device);
+	Inferno::Tensor tokens = Inferno::Tensor(Inferno::DType::Int32, Inferno::RandomGenerator::generateRandomIntVector(context_size, 0, vocabulary_size - 1), { 1,context_size }, "tokens",device);
 
 
 	
-	
 
-	std::vector<std::vector<float>> inputs(50000, { 784 });
-	std::vector<std::vector<float>> targets(50000, { 10 });
 
-	//GenerateSampleData(inputs, targets);
 
-	//LoadSampleData("train-images.idx3-ubyte", "train-labels.idx1-ubyte", inputs, targets);
 
-	/*Inferno::LayerNorm layernorm1 = Inferno::LayerNorm(3);
 
-	
-	Inferno::Tensor l = layernorm1(normfwd);
-	
-	std::cout << "Printing Layernorm after forward\n\n";
-	std::cout << l << std::endl;
-	
-	l.backward();	
+	//MyModel model(layers);
+	GPTModel model(vocabulary_size, context_size, embedding_dim, numheads, numblocks);
 
-	std::cout << "Printing Layernorm after backward\n\n";
-	std::cout << layernorm1 << std::endl;
-
-	*/
-	
-	std::vector<int> layers({ 784,576,256,10 });
-	//std::vector<int> layers({ 100,80,40,10});
-	//std::vector<int> layers({ 1,1,1,1 });
-
-	MyModel model(layers);
+	model.to(device);
 
 	Inferno::MSELoss loss_fn;
 
@@ -523,34 +515,16 @@ int main() {
 
 			cudaDeviceSynchronize();
 
+			Inferno::Tensor prediction = model.forward(tokens);
 
-			Inferno::Tensor in(Inferno::DType::Float32, inputs[i], { 784 }, "input", device);
-			Inferno::Tensor prediction = model.forward(in);
+			std::cout << prediction << std::endl;
+			std::cout << target << std::endl;
 
-			Inferno::Tensor targ(Inferno::DType::Float32, targets[i], { 10 }, "target", device);
-			Inferno::Tensor loss = loss_fn(prediction, targ);
+			Inferno::Tensor loss = loss_fn(prediction, target);
 
-			//std::cout << " **** Prediction ****" << std::endl;
-			//std::cout << prediction.to(Inferno::Device::cpu()) << std::endl;
-
-
-			//std::cout << " **** Input Grad before backward ****" << std::endl;
-			//std::cout << input.to(Inferno::Device::cpu()) << std::endl;
-
+			std::cout << loss << std::endl;
 
 			loss.backward();
-
-			//std::cout << input.to(Inferno::Device::cpu()) << std::endl;
-
-			//std::cout << " **** Input Grad after backward ****" << std::endl;
-			//std::cout << input.to(Inferno::Device::cpu()) << std::endl;
-
-			//std::cout << model.fc1.m_weights << std::endl;
-			//std::cout << model.fc1.m_biases << std::endl;
-			//std::cout << model.fc2.m_weights << std::endl;
-			//std::cout << model.fc2.m_biases << std::endl;
-			//std::cout << model.fc3.m_weights << std::endl;
-			//std::cout << model.fc3.m_biases << std::endl;
 
 
 			optimizer.step();

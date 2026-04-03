@@ -8,7 +8,7 @@
 #include "GradFN/mselossbackward.h"
 #include "GradFN/slicebackward.h"
 #include "GradFN/reshapebackward.h"
-
+#include "GradFN/concatbackward.h"
 
 namespace Inferno {
 
@@ -900,6 +900,15 @@ namespace Inferno {
 		}
 		//GetImpl(out)->set_requires_grad(req_grad);
 
+		//if all tensors are contiguous we can use the optimized contiguious concat functions for speed increase.
+		bool fast_mode = true;
+		for (const auto& t : tensors) {
+			if (!t.is_contiguous()) {
+				fast_mode = false;
+				break;
+			}
+		}
+
 		dispatchOne(dtype, [&](auto TagA) {
 			using AT = typename decltype(TagA)::type;
 
@@ -908,6 +917,7 @@ namespace Inferno {
 			std::vector<const AT*> src_ptrs;
 			src_ptrs.reserve(tensors.size());
 			for (const auto& t : tensors) {
+				auto blah = GetImpl(t)->data_as_ptr<AT>();
 				src_ptrs.push_back(GetImpl(t)->data_as_ptr<AT>());
 			}
 
@@ -959,9 +969,12 @@ namespace Inferno {
 			}
 			});
 
+		if ((Inferno::grad_enabled) && (req_grad)) {
+			GetImpl(out)->gradfn() = std::make_shared<ConcatBackward>(tensors, axis);
+
+		}
+
 		return out;
 	}
-
-
 }
 
