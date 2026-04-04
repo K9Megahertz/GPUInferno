@@ -109,7 +109,7 @@ namespace Inferno {
             var /= ndim;
 
             //get stddev
-            AT stddev = cuda_sqrt<AT>(var);
+            AT stddev = cuda_sqrt(var);
 
             optr[idx] = (iptr[idx] - mean) / stddev;
 

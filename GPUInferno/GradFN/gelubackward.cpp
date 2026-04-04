@@ -1,4 +1,4 @@
-#include "softmaxbackward.h"
+#include "gelubackward.h"
 
 
 namespace Inferno {
@@ -15,7 +15,8 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	SoftmaxBackward::SoftmaxBackward(const Tensor& A, const Tensor& out, int axis) : m_A(A), m_out(out), m_axis(axis) {
+	GeluBackward::GeluBackward(const Tensor& A, const Tensor& out) : m_A(A), m_out(out) {
+
 
 	}
 
@@ -31,7 +32,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void SoftmaxBackward::backward() {
+	void GeluBackward::backward() {
 
 		NoGradGuard guard;
 		Tensor g_out = Engine::grad_in(this, 0);
@@ -44,23 +45,16 @@ namespace Inferno {
 
 
 
-			Inferno::Tensor out(dtype_of_v<RT>, m_A.shape(), "SoftmaxBackward", m_A.device());
+			Inferno::Tensor out(dtype_of_v<RT>, m_A.shape(), "SigmoidBackward", m_A.device());
 
 
 			//get pointers to data
-			AT* aptr = GetImpl(m_out)->data_as_ptr<AT>();
+			AT* aptr = GetImpl(m_A)->data_as_ptr<AT>();
 			GT* gptr = GetImpl(g_out)->data_as_ptr<GT>();
 			RT* optr = GetImpl(out)->data_as_ptr<RT>();
 
-			const auto& shape = m_out.shape();
-			const auto& ystrides = m_out.strides();
-			const auto& gstrides = g_out.strides();
-			const auto& ostrides = out.strides();
-
-			const size_t yoffset = GetImpl(m_out)->offset();
-			const size_t goffset = GetImpl(g_out)->offset();
-			const size_t ooffset = GetImpl(out)->offset();
-
+			const size_t N = out.numel();
+			const size_t off = GetImpl(m_A)->offset();
 
 
 			switch (g_out.device().m_type) {
@@ -69,20 +63,8 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
-				cpu_softmax_backward(
-					aptr,
-					gptr,
-					optr,
-					shape,
-					ystrides,
-					gstrides,
-					ostrides,
-					yoffset,
-					goffset,
-					ooffset,
-					m_axis
-				);
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");				
+				cpu_gelu_backward(aptr, gptr, optr, N, off);
 				break;
 
 				////////////////////////////////////////////////////
@@ -90,19 +72,7 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
-				cuda_softmax_backward(
-					aptr,
-					gptr,
-					optr,
-					shape,
-					ystrides,
-					gstrides,
-					ostrides,
-					yoffset,
-					goffset,
-					ooffset,
-					m_axis
-				);
+				cuda_gelu_backward(aptr, gptr, optr, N, off);
 				break;
 
 			default:
@@ -137,7 +107,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void SoftmaxBackward::release() {
+	void GeluBackward::release() {
 		// drop references so graph can free
 		m_A = Tensor{};
 		m_out = Tensor{};
@@ -156,7 +126,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void SoftmaxBackward::get_inputs(std::vector<Tensor>& out) const {
+	void GeluBackward::get_inputs(std::vector<Tensor>& out) const {
 		out.push_back(m_A);
 
 	}

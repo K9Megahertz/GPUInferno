@@ -80,6 +80,59 @@ namespace Inferno {
 		size_t axis,
 		size_t rank);
 
+
+	template<typename T>
+	void cuda_softmax(
+		const T* aptr,
+		T* optr,
+		const std::vector<size_t>& shape,
+		const std::vector<size_t>& astrides,
+		const std::vector<size_t>& ostrides,
+		size_t aoffset,
+		size_t ooffset,
+		int axis
+	);
+
+	template<typename AT, typename GT, typename RT>
+	void cuda_softmax_backward(
+		const AT* yptr,
+		const GT* gptr,
+		RT* optr,
+		const std::vector<size_t>& shape,
+		const std::vector<size_t>& ystrides,
+		const std::vector<size_t>& gstrides,
+		const std::vector<size_t>& ostrides,
+		size_t yoffset,
+		size_t goffset,
+		size_t ooffset,
+		int axis
+	);
+
+	template<typename AT, typename RT>
+	void cuda_gelu(const AT* aptr, RT* optr, size_t N, size_t off);
+
+	template<typename AT, typename RT>
+	void cuda_gelu_strided(const AT* aptr, RT* optr, const std::vector<size_t>& shape, const std::vector<size_t>& astrides, const std::vector<size_t>& ostrides, size_t aoffset, size_t ooffset);
+
+
+	template<typename AT, typename GT, typename RT>
+	void cuda_gelu_backward(const AT* aptr, const GT* gptr, RT* optr, size_t N, size_t off);
+
+
+	template<typename GT, typename RT>
+	void cuda_select_backward_strided(
+		const GT* gptr,
+		RT* optr,
+		const std::vector<size_t>& out_shape,
+		const std::vector<size_t>& gstrides,
+		const std::vector<size_t>& parent_strides,
+		size_t goffset,
+		size_t poffset,
+		int axis,
+		size_t index
+	);
+
+
 	inline void check_cuda(cudaError_t err, const char* msg) {
 		if (err != cudaSuccess) {			
 			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string(msg) + ": " + cudaGetErrorString(err));

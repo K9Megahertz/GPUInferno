@@ -9,6 +9,7 @@
 #include "GradFN/slicebackward.h"
 #include "GradFN/reshapebackward.h"
 #include "GradFN/concatbackward.h"
+#include "GradFN/selectbackward.h"
 
 namespace Inferno {
 
@@ -972,6 +973,53 @@ namespace Inferno {
 		if ((Inferno::grad_enabled) && (req_grad)) {
 			GetImpl(out)->gradfn() = std::make_shared<ConcatBackward>(tensors, axis);
 
+		}
+
+		return out;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//
+	//  Function select
+	//
+	//
+	//
+	//
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	Tensor select(const Tensor& A, int axis, size_t index) {
+		const auto& shape = A.shape();
+		const auto& strides = A.strides();
+		const int ndim = static_cast<int>(shape.size());
+
+		int ax = axis;
+		if (ax < 0) ax += ndim;
+
+		if (ax < 0 || ax >= ndim) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "select: invalid axis");
+			exit(1);
+		}
+
+		if (index >= shape[ax]) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "select: index out of bounds");
+			exit(1);
+		}
+
+		std::vector<size_t> new_shape = shape;
+		std::vector<size_t> new_strides = strides;
+
+		size_t new_offset = GetImpl(A)->offset() + index * strides[ax];
+
+		new_shape.erase(new_shape.begin() + ax);
+		new_strides.erase(new_strides.begin() + ax);
+
+		Tensor out = make_view(A, new_shape, new_strides, new_offset, A.name() + ".select");
+
+		if (Inferno::grad_enabled && A.requires_grad()) {
+			GetImpl(out)->gradfn() = std::make_shared<SelectBackward>(A, ax, index);
 		}
 
 		return out;

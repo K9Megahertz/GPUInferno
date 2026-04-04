@@ -96,83 +96,44 @@ namespace Inferno {
 		size_t* d_out_shape = nullptr;
 		size_t* d_out_strides = nullptr;
 
-		cudaError_t err;
+		check_cuda(cudaMalloc(&d_shape, rank * sizeof(size_t)),"Error in cuda_scatter_add_slice");	
+		check_cuda(cudaMalloc(&d_strides, rank * sizeof(size_t)), "Error in cuda_scatter_add_slice");
+		check_cuda(cudaMalloc(&d_out_shape, rank * sizeof(size_t)), "Error in cuda_scatter_add_slice");
+		check_cuda(cudaMalloc(&d_out_strides, rank * sizeof(size_t)), "Error in cuda_scatter_add_slice");
+		
+		check_cuda(cudaMemcpy(d_shape, shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda_scatter_add_slice");
+		check_cuda(cudaMemcpy(d_strides, strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda_scatter_add_slice");
+		check_cuda(cudaMemcpy(d_out_shape, out_shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda_scatter_add_slice");
+		check_cuda(cudaMemcpy(d_out_strides, out_strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda_scatter_add_slice");
+		
 
-		err = cudaMalloc(&d_shape, rank * sizeof(size_t));
-		if (err != cudaSuccess) throw std::runtime_error("cudaMalloc failed for d_shape");
+		
+		const int threads = 256;
+		const int blocks = static_cast<int>((onumel + threads - 1) / threads);
 
-		err = cudaMalloc(&d_strides, rank * sizeof(size_t));
-		if (err != cudaSuccess) {
-			cudaFree(d_shape);
-			throw std::runtime_error("cudaMalloc failed for d_strides");
-		}
+		scatter_add_slice_kernel<T> << <blocks, threads >> > (
+			optr,
+			gptr,
+			d_shape,
+			d_strides,
+			offset,
+			d_out_shape,
+			d_out_strides,
+			out_offset,
+			rank,
+			onumel,
+			axis,
+			start,
+			step
+			);
 
-		err = cudaMalloc(&d_out_shape, rank * sizeof(size_t));
-		if (err != cudaSuccess) {
-			cudaFree(d_shape);
-			cudaFree(d_strides);
-			throw std::runtime_error("cudaMalloc failed for d_out_shape");
-		}
-
-		err = cudaMalloc(&d_out_strides, rank * sizeof(size_t));
-		if (err != cudaSuccess) {
-			cudaFree(d_shape);
-			cudaFree(d_strides);
-			cudaFree(d_out_shape);
-			throw std::runtime_error("cudaMalloc failed for d_out_strides");
-		}
-
-		err = cudaMemcpy(d_shape, shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto cleanup_error;
-
-		err = cudaMemcpy(d_strides, strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto cleanup_error;
-
-		err = cudaMemcpy(d_out_shape, out_shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto cleanup_error;
-
-		err = cudaMemcpy(d_out_strides, out_strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto cleanup_error;
-
-		{
-			const int threads = 256;
-			const int blocks = static_cast<int>((onumel + threads - 1) / threads);
-
-			scatter_add_slice_kernel<T> << <blocks, threads >> > (
-				optr,
-				gptr,
-				d_shape,
-				d_strides,
-				offset,
-				d_out_shape,
-				d_out_strides,
-				out_offset,
-				rank,
-				onumel,
-				axis,
-				start,
-				step
-				);
-
-			err = cudaGetLastError();
-			if (err != cudaSuccess) goto cleanup_error;
-		}
 
 		cudaFree(d_shape);
 		cudaFree(d_strides);
 		cudaFree(d_out_shape);
 		cudaFree(d_out_strides);
 		return;
-
-	cleanup_error:
-		{
-			std::string msg = std::string("cuda_scatter_add_slice failed: ") + cudaGetErrorString(err);
-			cudaFree(d_shape);
-			cudaFree(d_strides);
-			cudaFree(d_out_shape);
-			cudaFree(d_out_strides);
-			throw std::runtime_error(msg);
-		}
+	
 	}
 
 

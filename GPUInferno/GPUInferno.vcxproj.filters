@@ -126,6 +126,12 @@
     <ClCompile Include="functional\gelu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GradFN\gelubackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GradFN\selectbackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tensor.h">
@@ -277,6 +283,12 @@
     <ClInclude Include="functional\gelu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GradFN\gelubackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GradFN\selectbackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda\cudaadd.cu" />
@@ -295,5 +307,8 @@
     <CudaCompile Include="cuda\cudalayernorm.cu" />
     <CudaCompile Include="cuda\cudascatteraddslice.cu" />
     <CudaCompile Include="cuda\cudaconcat.cu" />
+    <CudaCompile Include="cuda\cudasoftmax.cu" />
+    <CudaCompile Include="cuda\cudagelu.cu" />
+    <CudaCompile Include="cuda\cudaselectbackward.cu" />
   </ItemGroup>
 </Project>

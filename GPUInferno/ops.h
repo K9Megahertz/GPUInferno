@@ -7,8 +7,7 @@
 namespace Inferno {	
 
 
-	Tensor add(Tensor& A, Tensor& B);
-	Tensor add_nograd(const Tensor& A, const Tensor& B);
+	Tensor add(Tensor& A, Tensor& B);	
 	Tensor subtract(Tensor& A, Tensor& B);
 	Tensor multiply(Tensor& A, Tensor& B);
 	Tensor matmul(const Tensor& A, const Tensor& B);
@@ -16,6 +15,7 @@ namespace Inferno {
 	Tensor transpose_impl(const Tensor& A, int dima, int dimb);
 	Tensor reshape_impl(Tensor& A, const std::vector<size_t>& newshape);
 	Tensor concat(const std::vector<Tensor>& tensors, int axis = 0);
+	Tensor select(const Tensor& A, int axis, size_t index);
 	Tensor make_view(const Tensor& base, const std::vector<size_t>& new_shape, const std::vector<size_t>& new_strides, size_t new_storage_offset, const std::string& name);
 
 

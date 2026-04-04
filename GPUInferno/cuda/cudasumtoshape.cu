@@ -61,6 +61,7 @@ namespace Inferno {
 
         check_cuda(cudaMalloc(&d_src_shape, src_rank * sizeof(size_t)), "sum_to_shape cudaMalloc d_src_shape failed");
         check_cuda(cudaMalloc(&d_temp_dst_strides, src_rank * sizeof(size_t)), "sum_to_shape cudaMalloc d_temp_dst_strides failed");
+
         check_cuda(cudaMemcpy(d_src_shape, src_shape.data(), src_rank * sizeof(size_t), cudaMemcpyHostToDevice), "sum_to_shape cudaMemcpy d_src_shape failed");
         check_cuda(cudaMemcpy(d_temp_dst_strides, temp_dst_strides.data(), src_rank * sizeof(size_t), cudaMemcpyHostToDevice), "sum_to_shape cudaMemcpy d_temp_dst_strides failed");
 

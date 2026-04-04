@@ -117,53 +117,23 @@ namespace Inferno {
 
 		cudaError_t err;
 
-		check_cuda(cudaMalloc(&d_src_ptrs, num_tensors * sizeof(T*)),"what");
+		check_cuda(cudaMalloc(&d_src_ptrs, num_tensors * sizeof(T*)),"Error in cuda concat");
+		check_cuda(cudaMalloc(&d_src_shapes_flat, src_shapes_flat_host.size() * sizeof(size_t)), "Error in cuda concat");
+		check_cuda(cudaMalloc(&d_src_strides_flat, src_strides_flat_host.size() * sizeof(size_t)), "Error in cuda concat");
+		check_cuda(cudaMalloc(&d_src_offsets, src_offsets_host.size() * sizeof(size_t)), "Error in cuda concat");
+		check_cuda(cudaMalloc(&d_axis_starts, axis_starts_host.size() * sizeof(size_t)), "Error in cuda concat");
+		check_cuda(cudaMalloc(&d_out_shape, out_shape_host.size() * sizeof(size_t)), "Error in cuda concat");
+		check_cuda(cudaMalloc(&d_out_strides, out_strides_host.size() * sizeof(size_t)), "Error in cuda concat");
 		
 
-		err = cudaMalloc(&d_src_shapes_flat, src_shapes_flat_host.size() * sizeof(size_t));
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMalloc(&d_src_strides_flat, src_strides_flat_host.size() * sizeof(size_t));
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMalloc(&d_src_offsets, src_offsets_host.size() * sizeof(size_t));
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMalloc(&d_axis_starts, axis_starts_host.size() * sizeof(size_t));
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMalloc(&d_out_shape, out_shape_host.size() * sizeof(size_t));
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMalloc(&d_out_strides, out_strides_host.size() * sizeof(size_t));
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_src_ptrs, src_ptrs_host.data(), num_tensors * sizeof(T*), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_src_shapes_flat, src_shapes_flat_host.data(),
-			src_shapes_flat_host.size() * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_src_strides_flat, src_strides_flat_host.data(),
-			src_strides_flat_host.size() * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_src_offsets, src_offsets_host.data(),
-			src_offsets_host.size() * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_axis_starts, axis_starts_host.data(),
-			axis_starts_host.size() * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_out_shape, out_shape_host.data(),
-			out_shape_host.size() * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
-
-		err = cudaMemcpy(d_out_strides, out_strides_host.data(),
-			out_strides_host.size() * sizeof(size_t), cudaMemcpyHostToDevice);
-		if (err != cudaSuccess) goto fail;
+		check_cuda(cudaMemcpy(d_src_ptrs, src_ptrs_host.data(), num_tensors * sizeof(T*), cudaMemcpyHostToDevice),"Error in cuda concat");
+		check_cuda(cudaMemcpy(d_src_shapes_flat, src_shapes_flat_host.data(),src_shapes_flat_host.size() * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda concat");
+		check_cuda(cudaMemcpy(d_src_strides_flat, src_strides_flat_host.data(),src_strides_flat_host.size() * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda concat");
+		check_cuda(cudaMemcpy(d_src_offsets, src_offsets_host.data(),src_offsets_host.size() * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda concat");
+		check_cuda(cudaMemcpy(d_axis_starts, axis_starts_host.data(),axis_starts_host.size() * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda concat");
+		check_cuda(cudaMemcpy(d_out_shape, out_shape_host.data(),out_shape_host.size() * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda concat");
+		check_cuda(cudaMemcpy(d_out_strides, out_strides_host.data(), out_strides_host.size() * sizeof(size_t), cudaMemcpyHostToDevice), "Error in cuda concat");
+		
 
 		{
 			const int threads = 256;
@@ -184,9 +154,7 @@ namespace Inferno {
 				rank,
 				num_tensors
 				);
-
-			err = cudaGetLastError();
-			if (err != cudaSuccess) goto fail;
+			
 		}
 
 		cudaFree(d_src_ptrs);
@@ -197,17 +165,7 @@ namespace Inferno {
 		cudaFree(d_out_shape);
 		cudaFree(d_out_strides);
 		return;
-
-	fail:
-		Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "cuda_concat failed.");
-		if (d_src_ptrs) cudaFree(d_src_ptrs);
-		if (d_src_shapes_flat) cudaFree(d_src_shapes_flat);
-		if (d_src_strides_flat) cudaFree(d_src_strides_flat);
-		if (d_src_offsets) cudaFree(d_src_offsets);
-		if (d_axis_starts) cudaFree(d_axis_starts);
-		if (d_out_shape) cudaFree(d_out_shape);
-		if (d_out_strides) cudaFree(d_out_strides);
-		exit(1);
+	
 	}
 
 

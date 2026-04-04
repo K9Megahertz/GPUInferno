@@ -163,12 +163,11 @@ public:
 
 class MultiHeadAttention : public Inferno::Module {
 public:
-	MultiHeadAttention(size_t embed_dim, size_t num_heads)
-		: m_embed_dim(embed_dim),
+	MultiHeadAttention(size_t embed_dim, size_t num_heads) : 
+		m_embed_dim(embed_dim),
 		m_num_heads(num_heads),
 		m_head_dim(embed_dim / num_heads),
-		W_out(embed_dim, embed_dim)
-
+		W_out(embed_dim, embed_dim)	
 	{
 
 		Wq_layers.reserve(m_num_heads);
@@ -192,7 +191,6 @@ public:
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
 		std::vector<Inferno::Tensor> heads;
-
 
 
 		for (int i = 0; i < m_num_heads; ++i) {
@@ -335,17 +333,12 @@ public:
 		//Linear
 		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Linear");
 		x = linear1.forward(x);
-		std::cout << x << std::endl;
-		//Softmax
-		//Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "SoftMax");
-		//x = Inferno::softmax(x);
-		//std::cout << x << std::endl;
+		std::cout << x << std::endl;		
 
 		std::cout << "next logits slice" << std::endl;
-		Inferno::Tensor next_logits = x.slice(-2, m_context_size - 1, m_context_size - 1);
-		std::cout << next_logits << std::endl;
-
-		//Inferno::Tensor out = Inferno::softmax(next_logits);
+		//Inferno::Tensor next_logits = x.slice(-2, m_context_size - 1, m_context_size - 1);
+		Inferno::Tensor next_logits = Inferno::select(x, -2, m_context_size - 1); // {B,V}
+		std::cout << next_logits << std::endl;		
 
 		return next_logits;
 	}
@@ -436,8 +429,8 @@ int main() {
 
 
 	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_ERROR);
-	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
-	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
+	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
+	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
 	Logger::Start("logs/applicationlog.txt");
 
 	Inferno::RandomGenerator::initializeWithSeed(42);
@@ -446,6 +439,15 @@ int main() {
 
 	//RunTests();
 
+
+
+	
+	///////////////////////////////////////////////////
+	//
+	//  HyperParams
+	//
+	///////////////////////////////////////////////////
+	
 
 	//Quick test
 	//size_t vocabulary_size = 32;
@@ -456,39 +458,29 @@ int main() {
 
 
 	//Sane
-	/*size_t vocabulary_size = 32;
-	size_t context_size = 128;
-	size_t embedding_dim = 256;
-	size_t numheads = 4;
-	size_t numblocks = 4;*/
-
-
-	//GPT 2
 	//size_t vocabulary_size = 32;
-	//size_t context_size = 1024;
-	//size_t embedding_dim = 768;
-	//size_t numheads = 12;
-	//size_t numblocks = 12;
+	//size_t context_size = 128;
+	//size_t embedding_dim = 256;
+	//size_t numheads = 4;
+	//size_t numblocks = 4;
 
 
 	//GPT 2
-	size_t vocabulary_size = 32;
+	size_t vocabulary_size = 50257;
 	size_t context_size = 1024;
-	size_t embedding_dim = 2048;
-	size_t numheads = 16;
-	size_t numblocks = 24;
-	
+	size_t embedding_dim = 768;
+	size_t numheads = 12;
+	size_t numblocks = 12;
+
 
 		
+	std::vector<float> data(vocabulary_size,0.0f);
+	data[0] = 1.0f;
+	Inferno::Tensor target(Inferno::DType::Float32, data, { 1, vocabulary_size }, "target", device);
 	
-	Inferno::Tensor target(Inferno::DType::Float32, { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, { 1, 32 }, "target", device);
 	//Inferno::Tensor tokens(Inferno::DType::Int32, { 42, 13, 1, 0, 99, 34, 23, 78, 1, 25, 22, 45, 02, 13, 67, 88 }, { 16 }, "tokens", device);
 	Inferno::Tensor tokens = Inferno::Tensor(Inferno::DType::Int32, Inferno::RandomGenerator::generateRandomIntVector(context_size, 0, vocabulary_size - 1), { 1,context_size }, "tokens",device);
-
-
-	
-
-
+		
 
 
 
@@ -505,7 +497,7 @@ int main() {
 	Inferno::Timer t1("matmul");
 
 	int epochs = 1;
-	int loopcount = 1;
+	int loopcount = 10;
 	for (int e = 0; e < epochs; e++) {
 		for (int i = 0; i < loopcount; i++) {
 
