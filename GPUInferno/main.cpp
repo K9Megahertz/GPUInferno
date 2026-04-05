@@ -604,7 +604,7 @@ int main() {
 	Inferno::Timer t1("matmul");
 
 	int epochs = 1;
-	int loopcount = 10000;
+	int loopcount = 100;
 	for (int e = 0; e < epochs; e++) {
 		for (int i = 0; i < loopcount; i++) {
 

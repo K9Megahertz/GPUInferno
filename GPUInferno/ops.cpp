@@ -575,7 +575,10 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal matmul path");
-				cuda_matmul<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
+				if (A.is_contiguous() && B.is_contiguous())
+					cuda_matmul_fast2<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
+				else 
+					cuda_matmul<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
 				break;
 
 			default:

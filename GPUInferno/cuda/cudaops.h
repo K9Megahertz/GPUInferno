@@ -31,6 +31,13 @@ namespace Inferno {
 	template<typename AT, typename BT, typename RT>
 	void cuda_matmul(const AT* aptr, const BT* bptr, RT* outptr, const std::vector<size_t>& a_shape, const std::vector<size_t>& a_strides, const std::vector<size_t>& b_shape, const std::vector<size_t>& b_strides, const std::vector<size_t>& out_shape);
 
+
+	template<typename AT, typename BT, typename RT>
+	void cuda_matmul_fast(const AT* aptr, const BT* bptr, RT* outptr, const std::vector<size_t>& a_shape, const std::vector<size_t>& a_strides, const std::vector<size_t>& b_shape, const std::vector<size_t>& b_strides, const std::vector<size_t>& out_shape);
+
+	template<typename AT, typename BT, typename RT>
+	void cuda_matmul_fast2(const AT* aptr, const BT* bptr, RT* outptr, const std::vector<size_t>& a_shape, const std::vector<size_t>& a_strides, const std::vector<size_t>& b_shape, const std::vector<size_t>& b_strides, const std::vector<size_t>& out_shape);
+
 	template<typename AT>
 	void cuda_sum_to_shape(AT* dst_ptr, const AT* src_ptr, size_t src_numel, size_t src_rank, const std::vector<size_t>& src_shape, const std::vector<size_t>& temp_dst_strides, size_t out_numel);
 
