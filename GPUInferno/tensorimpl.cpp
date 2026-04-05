@@ -18,7 +18,7 @@ namespace  Inferno {
 
 	TensorImpl::TensorImpl() {}	
 	
-	TensorImpl::TensorImpl(DType type, std::vector<size_t> shape, std::string name, Inferno::Device device) {
+	TensorImpl::TensorImpl(DType type, std::vector<size_t> shape, std::string name, Inferno::Device device, bool requires_grad) {
 		m_device = device;
 		m_dtype = type;
 		m_shape = shape;
@@ -26,7 +26,7 @@ namespace  Inferno {
 		m_name = name;
 		m_strides = calculate_strides(shape);	
 		m_grad = nullptr;
-		m_requires_grad = true;
+		m_requires_grad = requires_grad;
 		m_isview = false;
 
 		size_t bytes = numel() * dtype_size(type);
@@ -47,7 +47,7 @@ namespace  Inferno {
 
 	}
 
-	TensorImpl::TensorImpl(DType type, std::initializer_list<size_t> shape, std::string name, Inferno::Device device) {
+	TensorImpl::TensorImpl(DType type, std::initializer_list<size_t> shape, std::string name, Inferno::Device device, bool requires_grad) {
 		m_device = device;
 		m_dtype = type;
 		m_shape = shape;
@@ -55,7 +55,7 @@ namespace  Inferno {
 		m_name = name;
 		m_strides = calculate_strides(shape);
 		m_grad = nullptr;
-		m_requires_grad = true;
+		m_requires_grad = requires_grad;
 		m_isview = false;
 
 		size_t bytes = numel() * dtype_size(type);
@@ -394,14 +394,14 @@ namespace  Inferno {
 		// If this tensor does not require gradients,
 		// it contributes nothing to the backward graph.
 		if (!m_requires_grad) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() didnt need grad so return nullptr");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() didnt need grad so return nullptr: " + this->m_name);
 			return nullptr;
 		}
 
 		// If this tensor was produced by an operation,
 		// it has a grad_fn (non-leaf).
 		if (m_grad_fn) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() we have a grad_fn so return it");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() we have a grad_fn so return it: " + this->m_name);
 			return m_grad_fn;
 		}
 
@@ -410,6 +410,7 @@ namespace  Inferno {
 		//  grad_fn == nullptr
 		//  This is a leaf tensor.
 		//  Backward must terminate here and accumulate into .grad.
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() we have a leaf: " + this->m_name);
 		return get_or_create_accumulate_grad();
 	}
 
@@ -427,15 +428,15 @@ namespace  Inferno {
 
 	std::shared_ptr<Node> TensorImpl::get_or_create_accumulate_grad()
 	{
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::get_or_create_accumulate_grad()");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::get_or_create_accumulate_grad(): " + this->m_name);
 		// Reuse existing accumulator if already created
 		if (m_grad_accum) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "g_grad_accum was true, so return it");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "g_grad_accum was true, so return it: " + this->m_name);
 			return m_grad_accum;
 		}
 
 		// Create it lazily
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "g_grad_accum was false, so create it");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "g_grad_accum was false, so create it: " + this->m_name);
 		m_grad_accum = std::make_shared<AccumulateGrad>(weak_from_this());
 
 		return m_grad_accum;
@@ -557,6 +558,10 @@ namespace  Inferno {
 		}
 
 		return true;
+	}
+
+	void TensorImpl::set_requires_grad(bool flag) {
+		m_requires_grad = flag;
 	}
 
 }

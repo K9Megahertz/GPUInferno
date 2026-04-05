@@ -62,7 +62,13 @@ namespace Inferno {
 		size_t onumel, size_t axis, size_t start, size_t step);
 
 	template <typename AT>
-	void cuda_layer_normalization(const AT* iptr, AT* optr, float* gptr, float* bptr, size_t num_batches, size_t dim);
+	//void cuda_layer_normalization(const AT* iptr, AT* optr, float* gptr, float* bptr, size_t num_batches, size_t dim);
+	void cuda_layer_normalization(const AT* iptr, AT* optr, const float* gptr, const float* bptr, float* meanptr, float* invstdptr, size_t num_batches, size_t dim, float eps);
+
+
+	template<typename AT, typename GT>
+	void cuda_layernorm_backward(const AT* aptr, const AT* goutptr, const float* gptr, const float* meanptr, const float* invstdptr,
+		GT* gaptr, float* ggptr, float* gbptr, size_t num_batches, size_t dim);
 
 
 	template <typename T>

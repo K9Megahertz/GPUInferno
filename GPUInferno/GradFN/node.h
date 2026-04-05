@@ -32,7 +32,11 @@ namespace Inferno {
 		virtual void release() = 0;
 		virtual void get_inputs(std::vector<Tensor>& out) const = 0;
 
+		const std::string& name() const { return m_name; }
+		void set_name(const std::string& name) { m_name = name; }
+
 	private:
+		std::string m_name;
 		
 		
 

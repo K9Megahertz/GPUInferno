@@ -26,7 +26,7 @@ namespace Inferno {
 			//get pointers to data
 			auto aptr = implA->data_as_ptr<AT>();
 
-			Inferno::Tensor out(dtype_of_v<RT>, A.shape(), "sigmoid", A.device());
+			Inferno::Tensor out(dtype_of_v<RT>, A.shape(), "sigmoid", A.device(), true);
 
 			auto implout = GetImpl(out);
 			auto optr = implout->data_as_ptr<RT>();
@@ -38,7 +38,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal sigmoid path");
 				cpu_sigmoid(aptr, optr, out.numel());
 				break;
 
@@ -46,7 +46,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal sigmoid path");
 				cuda_sigmoid<AT>(aptr, optr, out.numel());
 				break;
 
@@ -55,7 +55,7 @@ namespace Inferno {
 				exit(1);
 			}
 
-			if ((Inferno::grad_enabled) && (A.requires_grad() || out.requires_grad())) {
+			if ((Inferno::grad_enabled) && (A.requires_grad())) {
 				implout->gradfn() = std::make_shared<SigmoidBackward>(A, out);
 			}
 

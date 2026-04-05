@@ -16,7 +16,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	MSELossBackward::MSELossBackward(const Tensor& A, const Tensor& B) : m_A(A), m_B(B) {
-
+		set_name("MSELossBackward");
 
 	}
 
@@ -61,7 +61,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal mse_loss_backward path");
 				cpu_mse_loss_backward(aptr, bptr, gaptr, gbptr, gout, m_A.numel());
 
 				break;
@@ -70,7 +70,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal mse_loss_backward path");
 				cuda_mse_loss_backward(aptr, bptr, gaptr, gbptr, gout, m_A.numel());
 				break;
 

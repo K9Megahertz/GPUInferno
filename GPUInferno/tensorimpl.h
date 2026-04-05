@@ -37,11 +37,11 @@ namespace Inferno {
 	public:
 
 		TensorImpl();		
-		TensorImpl(DType type, std::vector<size_t> shape, std::string name, Inferno::Device device);
-		TensorImpl(DType type, std::initializer_list<size_t> shape, std::string name, Inferno::Device device);
+		TensorImpl(DType type, std::vector<size_t> shape, std::string name, Inferno::Device device, bool requires_grad = false);
+		TensorImpl(DType type, std::initializer_list<size_t> shape, std::string name, Inferno::Device device, bool requires_grad = false);
 
 		template <typename T>
-		TensorImpl(DType type, const std::vector<T>& data, std::vector<size_t> shape, std::string name, Inferno::Device device) {
+		TensorImpl(DType type, const std::vector<T>& data, std::vector<size_t> shape, std::string name, Inferno::Device device, bool requires_grad = false) {
 			m_device = device;
 			m_dtype = type;
 			m_shape = shape;
@@ -49,8 +49,10 @@ namespace Inferno {
 			m_name = name;
 			m_strides = calculate_strides(shape);
 			m_grad = nullptr;
-			m_requires_grad = true;
+			m_requires_grad = requires_grad;
 			m_isview = false;
+			m_grad_fn = nullptr;
+			m_grad_accum = nullptr;
 
 
 			//TODO: validate T == dtype
@@ -79,7 +81,7 @@ namespace Inferno {
 		}
 
 		template <typename T>
-		TensorImpl(DType type, const std::initializer_list<T>& data, std::initializer_list<size_t> shape, std::string name, Inferno::Device device) {
+		TensorImpl(DType type, const std::initializer_list<T>& data, std::initializer_list<size_t> shape, std::string name, Inferno::Device device, bool requires_grad = false) {
 			m_device = device;
 			m_dtype = type;
 			m_shape = shape;
@@ -87,8 +89,10 @@ namespace Inferno {
 			m_name = name;
 			m_strides = calculate_strides(shape);
 			m_grad = nullptr;
-			m_requires_grad = true;
+			m_requires_grad = requires_grad;
 			m_isview = false;
+			m_grad_fn = nullptr;
+			m_grad_accum = nullptr;
 
 
 			//TODO: validate T == dtype
@@ -181,6 +185,7 @@ namespace Inferno {
 		void set_grad(Tensor& g);
 
 		void set_is_view(bool flag);
+		void set_requires_grad(bool flag);		
 		bool is_view();
 		void set_base(const std::shared_ptr<TensorImpl>& base);
 		std::shared_ptr<TensorImpl> get_base();

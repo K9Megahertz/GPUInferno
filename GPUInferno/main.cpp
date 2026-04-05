@@ -114,7 +114,8 @@ public:
 
 	PositionalEncoding(size_t context_size, size_t embed_dim) {
 
-
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Positional Encoding - Initializing buffers");
 		//initialize positional vectors
 		std::vector<float> pe_data(context_size * embed_dim);
 
@@ -133,15 +134,18 @@ public:
 			}
 		}
 
-
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Positional Encoding - Creating tensor");
 		pe = Inferno::Tensor(Inferno::DType::Float32, std::move(pe_data), { context_size, embed_dim }, "positional-encoding");
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Positional Encoding - Register Buffer");
 		register_buffer(pe);
 
 	}
 
 
 	Inferno::Tensor forward(Inferno::Tensor& x) {
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Positional Encoding forward");
 		return x + pe;
 	}
 
@@ -190,26 +194,48 @@ public:
 	}
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
+
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Multihead Attention forward");
 		std::vector<Inferno::Tensor> heads;
 
 
 		for (int i = 0; i < m_num_heads; ++i) {
 			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Head: " + std::to_string(i));
+			
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - Q forward");
 			auto q = Wq_layers[i].forward(x);
+			
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - K forward");
 			auto k = Wk_layers[i].forward(x);
+			
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - V forward");
 			auto v = Wv_layers[i].forward(x);
-
+			
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - Attn scores forward - transpose -> matmul -> Divide");
 			auto attn_scores = Inferno::matmul(q, k.transpose(-1, -2)) / std::sqrt(static_cast<float>(m_head_dim));
-
+			
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - softmax forward");
 			auto attn_probs = Inferno::Softmax(attn_scores, -1);
+			
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - matmul forward - Attn x V");
 			auto head = Inferno::matmul(attn_probs, v);
 
 			heads.push_back(head);
 		}
 
 		// concatenate heads along embedding dim
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - concat forward");
 		Inferno::Tensor concat = Inferno::concat(heads, -1);
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MHA - Linear forward");
 		return W_out.forward(concat);
 	}
 
@@ -253,6 +279,8 @@ public:
 	}
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Transformer Block forward");
 		auto normed = layernorm1.forward(x);
 		auto attn_out = attn.forward(normed);
 		x = x + attn_out;
@@ -312,7 +340,9 @@ public:
 
 	Inferno::Tensor forward(Inferno::Tensor& input) {
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "\n");
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "GPTModel forward");
 		//Get embedding vectors
 		Inferno::Tensor x = emb1.forward(input);
 
@@ -327,18 +357,18 @@ public:
 		}
 		//Layer norm
 		//std::cout << "LayerNorm" << std::endl;
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "LayerNorm");
+		//Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "LayerNorm");
 		x = layernorm1.forward(x);
-		std::cout << x << std::endl;
+		//std::cout << x << std::endl;
 		//Linear
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Linear");
+		//Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Linear");
 		x = linear1.forward(x);
-		std::cout << x << std::endl;		
-
-		std::cout << "next logits slice" << std::endl;
+		//std::cout << x << std::endl;		
+		
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "next logits slice");
 		//Inferno::Tensor next_logits = x.slice(-2, m_context_size - 1, m_context_size - 1);
 		Inferno::Tensor next_logits = Inferno::select(x, -2, m_context_size - 1); // {B,V}
-		std::cout << next_logits << std::endl;		
+		//std::cout << next_logits << std::endl;		
 
 		return next_logits;
 	}
@@ -424,30 +454,95 @@ public:
 };
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Class MyModel
+//
+//
+//
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class TestModel : public Inferno::Module {
+
+public:
+
+
+	TestModel(std::vector<size_t>& layers) : fc1(layers[0], layers[1], device), fc2(layers[1], layers[2], device), fc3(layers[2], layers[3], device)
+	{
+
+		act1 = Inferno::Sigmoid(device);
+		act2 = Inferno::Sigmoid(device);
+		act3 = Inferno::Sigmoid(device);
+
+		this->register_module(&fc1);
+		this->register_module(&fc2);
+		this->register_module(&fc3);
+
+		this->register_module(&act1);
+		this->register_module(&act2);
+		this->register_module(&act3);
+		
+		
+		
+		
+	}
+
+	Inferno::Tensor forward(Inferno::Tensor& input) {
+
+		Inferno::Tensor out = fc1.forward(input);
+		out = act1.forward(out);
+		out = fc2.forward(out);
+		out = act2.forward(out);
+		out= fc3.forward(out);
+		out = act3.forward(out);
+		return out;
+	}
+
+
+	Inferno::Linear fc1;
+	Inferno::Linear fc2;
+	Inferno::Linear fc3;
+
+	Inferno::Sigmoid act1;
+	Inferno::Sigmoid act2;
+	Inferno::Sigmoid act3;
+	
+
+	
+
+
+
+
+};
+
+
 int main() {
 
 
 
 	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_ERROR);
-	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
-	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
+	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
+	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
 	Logger::Start("logs/applicationlog.txt");
 
 	Inferno::RandomGenerator::initializeWithSeed(42);
 
-	
+
 
 	//RunTests();
 
 
 
-	
+
 	///////////////////////////////////////////////////
 	//
 	//  HyperParams
 	//
 	///////////////////////////////////////////////////
-	
+
 
 	//Quick test
 	//size_t vocabulary_size = 32;
@@ -458,34 +553,46 @@ int main() {
 
 
 	//Sane
-	//size_t vocabulary_size = 32;
-	//size_t context_size = 128;
-	//size_t embedding_dim = 256;
-	//size_t numheads = 4;
-	//size_t numblocks = 4;
+	size_t vocabulary_size = 32;
+	size_t context_size = 128;
+	size_t embedding_dim = 256;
+	size_t numheads = 1;
+	size_t numblocks = 1;
 
 
 	//GPT 2
-	size_t vocabulary_size = 50257;
-	size_t context_size = 1024;
-	size_t embedding_dim = 768;
-	size_t numheads = 12;
-	size_t numblocks = 12;
+	//size_t vocabulary_size = 50257;
+	//size_t context_size = 256;
+	//size_t embedding_dim = 768;
+	//size_t numheads = 16;
+	//size_t numblocks = 16;
 
 
-		
-	std::vector<float> data(vocabulary_size,0.0f);
+
+	std::vector<float> data(vocabulary_size, 0.0f);
 	data[0] = 1.0f;
 	Inferno::Tensor target(Inferno::DType::Float32, data, { 1, vocabulary_size }, "target", device);
-	
+	Inferno::Tensor tokens = Inferno::Tensor(Inferno::DType::Int32, Inferno::RandomGenerator::generateRandomIntVector(context_size, 0, vocabulary_size - 1), { 1,context_size }, "tokens", device);
+
+
 	//Inferno::Tensor tokens(Inferno::DType::Int32, { 42, 13, 1, 0, 99, 34, 23, 78, 1, 25, 22, 45, 02, 13, 67, 88 }, { 16 }, "tokens", device);
-	Inferno::Tensor tokens = Inferno::Tensor(Inferno::DType::Int32, Inferno::RandomGenerator::generateRandomIntVector(context_size, 0, vocabulary_size - 1), { 1,context_size }, "tokens",device);
+	//Inferno::Tensor input = Inferno::Tensor(Inferno::DType::Float32, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }, { 10 }, "input", device);
+	
+	
+	//for mnist test
+	//std::vector<size_t> layers({ 784,512,256,10 });
+	//Inferno::Tensor input = Inferno::Tensor(Inferno::DType::Float32, Inferno::RandomGenerator::generateRandomFloatVector(layers[0],-0.5f,0.5f), { layers[0] }, "input", device);
+	//Inferno::Tensor target = Inferno::Tensor(Inferno::DType::Float32, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 10 }, "target", device);
+	
 		
 
 
+	
 
 	//MyModel model(layers);
 	GPTModel model(vocabulary_size, context_size, embedding_dim, numheads, numblocks);
+
+	//TestModel model(layers);
 
 	model.to(device);
 
@@ -497,7 +604,7 @@ int main() {
 	Inferno::Timer t1("matmul");
 
 	int epochs = 1;
-	int loopcount = 10;
+	int loopcount = 1;
 	for (int e = 0; e < epochs; e++) {
 		for (int i = 0; i < loopcount; i++) {
 
@@ -506,13 +613,14 @@ int main() {
 			cudaDeviceSynchronize();
 
 			Inferno::Tensor prediction = model.forward(tokens);
+			//Inferno::Tensor prediction = model.forward(input);			
 
-			std::cout << prediction << std::endl;
-			std::cout << target << std::endl;
+			//std::cout << prediction << std::endl;
+			//std::cout << target << std::endl;
 
 			Inferno::Tensor loss = loss_fn(prediction, target);
 
-			std::cout << loss << std::endl;
+			//std::cout << loss << std::endl;
 
 			loss.backward();
 
@@ -522,6 +630,8 @@ int main() {
 
 
 			t1.stop();
+
+
 
 			Inferno::Tensor lossp = loss.to(Inferno::Device::cpu());
 
@@ -535,10 +645,17 @@ int main() {
 			//}
 
 			if (i >= loopcount - 1) {
-				std::cout << prediction.to(Inferno::Device::cpu()) << std::endl;
+				//std::cout << prediction.to(Inferno::Device::cpu()) << std::endl;
 			}
 		}
 	}
+
+	//std::cout << model.fc1.m_weights << std::endl;
+	//std::cout << model.fc1.m_biases << std::endl;
+
+	//std::cout << input << std::endl;
+	//std::cout << tokens << std::endl;
+	//std::cout << target << std::endl;
 	
 
 	Inferno::NodeTracker::dumpIDs();

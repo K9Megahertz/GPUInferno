@@ -23,7 +23,7 @@ namespace Inferno {
 
 		//AccumulateGrad(const Tensor& A);
 		explicit AccumulateGrad(std::weak_ptr<TensorImpl> leaf)	: m_leaf(std::move(leaf)) {
-		
+			set_name("AccumulateGrad");
 		}
 
 		void backward() override;

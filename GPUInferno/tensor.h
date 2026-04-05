@@ -163,28 +163,28 @@ namespace Inferno {
 	public:
 
 		Tensor() = default;
-		Tensor(DType dtype, std::vector<size_t> shape, std::string name, Inferno::Device device);
-		Tensor(DType dtype, std::initializer_list<size_t> shape, std::string name, Inferno::Device device);
+		Tensor(DType dtype, std::vector<size_t> shape, std::string name, Inferno::Device device, bool requires_grad = false);
+		Tensor(DType dtype, std::initializer_list<size_t> shape, std::string name, Inferno::Device device, bool requires_grad = false);
 
 		template <typename T>
-		Tensor(DType dtype, const std::initializer_list<T>& data, std::initializer_list<size_t> shape, std::string name, Inferno::Device device = Inferno::Device::cpu()) {
-			m_impl = std::make_shared<TensorImpl>(dtype,data,shape,name,device);
+		Tensor(DType dtype, const std::initializer_list<T>& data, std::initializer_list<size_t> shape, std::string name, Inferno::Device device = Inferno::Device::cpu(), bool requires_grad = false) {
+			m_impl = std::make_shared<TensorImpl>(dtype,data,shape,name,device,requires_grad);
 			m_device = device;
 			m_id = m_impl->id();
 		
 		}
 
 		template <typename T>
-		Tensor(DType dtype, const std::vector<T>& data, std::initializer_list<size_t> shape, std::string name, Inferno::Device device = Inferno::Device::cpu()) {
-			m_impl = std::make_shared<TensorImpl>(dtype, data, shape, name, device);
+		Tensor(DType dtype, const std::vector<T>& data, std::initializer_list<size_t> shape, std::string name, Inferno::Device device = Inferno::Device::cpu(), bool requires_grad = false) {
+			m_impl = std::make_shared<TensorImpl>(dtype, data, shape, name, device, requires_grad);
 			m_device = device;
 			m_id = m_impl->id();
 
 		}
 
 		template <typename T>
-		Tensor(DType dtype, std::initializer_list<size_t> shape, std::string name, Inferno::Device device = Inferno::Device::cpu()) {
-			m_impl = std::make_shared<TensorImpl>(dtype, shape, name, device);
+		Tensor(DType dtype, std::initializer_list<size_t> shape, std::string name, Inferno::Device device = Inferno::Device::cpu(), bool requires_grad = false) {
+			m_impl = std::make_shared<TensorImpl>(dtype, shape, name, device, requires_grad);
 			m_device = device;
 			m_id = m_impl->id();
 
@@ -229,6 +229,8 @@ namespace Inferno {
 		size_t ndim() const;
 		bool requires_grad();
 		bool requires_grad() const;
+		void set_requires_grad(bool flag);
+		
 		
 
 

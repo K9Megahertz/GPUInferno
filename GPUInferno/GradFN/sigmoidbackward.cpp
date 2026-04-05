@@ -16,7 +16,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	SigmoidBackward::SigmoidBackward(const Tensor& A, const Tensor& out) : m_A(A), m_out(out) {
-
+		set_name("SigmoidBackward");
 
 	}
 
@@ -60,7 +60,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal sigmoid backward path");
 				cpu_sigmoid_backward(aptr, gptr, optr, out.numel());
 
 				break;
@@ -69,7 +69,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal sigmoid backward path");
 				cuda_sigmoid_backward<AT,GT,RT>(aptr, gptr, optr, out.numel());
 				break;
 

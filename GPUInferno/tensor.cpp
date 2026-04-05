@@ -1,5 +1,5 @@
 #include "tensor.h"
-
+#include "GradFN/transposebackward.h"
 
 
 namespace Inferno {	
@@ -17,14 +17,14 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	Tensor::Tensor(DType dtype, std::vector<size_t> shape, std::string name, Inferno::Device device) {
-		m_impl = std::make_shared<TensorImpl>(dtype, shape, name, device);
+	Tensor::Tensor(DType dtype, std::vector<size_t> shape, std::string name, Inferno::Device device, bool requires_grad) {
+		m_impl = std::make_shared<TensorImpl>(dtype, shape, name, device,requires_grad);
 		m_device = device;	
 		m_id = m_impl->id();
 	}
 
-	Tensor::Tensor(DType dtype, std::initializer_list<size_t> shape, std::string name, Inferno::Device device) {
-		m_impl = std::make_shared<TensorImpl>(dtype, shape, name, device);
+	Tensor::Tensor(DType dtype, std::initializer_list<size_t> shape, std::string name, Inferno::Device device, bool requires_grad) {
+		m_impl = std::make_shared<TensorImpl>(dtype, shape, name, device, requires_grad);
 		m_device = device;
 		m_id = m_impl->id();
 	}
@@ -220,7 +220,7 @@ namespace Inferno {
 
 			os << "]\n";
 
-
+			os << "requires_grad = " << (p->requires_grad() ? "yes" : "no") << "\n";
 			os << "has_grad = " << (p->grad() ? "yes" : "no") << "\n";
 
 			//Print out grad
@@ -630,7 +630,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal ones_like path");
 				for (size_t i = 0; i < n; i++)
 					ptr[i] = static_cast<AT>(1);
 				break;
@@ -639,7 +639,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal ones_like path");
 				cuda_fill<AT>(ptr, 1, n);
 				break;
 
@@ -681,7 +681,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_INFO, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal zeros_like path");
 				for (size_t i = 0; i < n; i++)
 					ptr[i] = static_cast<AT>(0);
 				break;
@@ -690,7 +690,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_INFO, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal zeros_like path");
 				cuda_fill<AT>(ptr, 0, n);
 				break;
 
@@ -789,14 +789,28 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Tensor Tensor::transpose(int dima, int dimb) {
-							
-		return transpose_impl(*this, dima, dimb);
+		
+			Tensor out = transpose_impl(*this, dima, dimb);
 
+			if (grad_enabled && (*this).requires_grad()) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Transpose - Making a TransposeBackward node");
+				GetImpl(out)->gradfn() = std::make_shared<TransposeBackward>(*this, dima, dimb);
+			}
+
+			return out;						
+		
 	}
 
 	Tensor Tensor::transpose(int dima, int dimb) const {
 
-		return Tensor{};
+		Tensor out = transpose_impl(*this, dima, dimb);
+
+		if (grad_enabled && (*this).requires_grad()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Transpose - Making a TransposeBackward node");
+			GetImpl(out)->gradfn() = std::make_shared<TransposeBackward>(*this, dima, dimb);
+		}
+
+		return out;
 
 	}
 
@@ -818,6 +832,10 @@ namespace Inferno {
 
 	bool Tensor::requires_grad() const {
 		return GetImpl(*this)->requires_grad();
+	}
+
+	void Tensor::set_requires_grad(bool flag) {
+		GetImpl(*this)->set_requires_grad(flag);
 	}
 	
 

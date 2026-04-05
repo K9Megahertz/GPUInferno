@@ -115,7 +115,6 @@ namespace Inferno {
 		size_t* d_out_shape = nullptr;
 		size_t* d_out_strides = nullptr;
 
-		cudaError_t err;
 
 		check_cuda(cudaMalloc(&d_src_ptrs, num_tensors * sizeof(T*)),"Error in cuda concat");
 		check_cuda(cudaMalloc(&d_src_shapes_flat, src_shapes_flat_host.size() * sizeof(size_t)), "Error in cuda concat");

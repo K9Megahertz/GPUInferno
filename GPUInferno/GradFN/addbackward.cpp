@@ -17,7 +17,7 @@ namespace Inferno {
 
 
 	AddBackward::AddBackward(const Tensor& A, const Tensor& B) : m_A(A) , m_B(B) {
-
+		set_name("AddBackward");
 
 	}
 

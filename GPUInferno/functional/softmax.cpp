@@ -33,7 +33,7 @@ namespace Inferno {
 				exit(1);
 			}
 
-			Inferno::Tensor out(dtype_of_v<AT>, A.shape(), "softmax", A.device());
+			Inferno::Tensor out(dtype_of_v<AT>, A.shape(), "softmax", A.device(), true);
 
 			//get pointers to data
 			auto aptr = GetImpl(A)->data_as_ptr<AT>();			
@@ -45,7 +45,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");				
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal softmax path");
 				cpu_softmax(aptr, optr, A.shape(), A.strides(), out.strides(), A.offset(), out.offset(), ax);					
 				break;
 
@@ -53,7 +53,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal softmax path");
 				//cuda_softmax(aptr, optr, outer, dim, inner, off, N);
 				cuda_softmax(aptr, optr, A.shape(), A.strides(), out.strides(), A.offset(), out.offset(), ax);
 				break;
@@ -63,7 +63,8 @@ namespace Inferno {
 				exit(1);
 			}
 
-			if ((Inferno::grad_enabled) && (A.requires_grad() || out.requires_grad())) {
+			if ((Inferno::grad_enabled) && (A.requires_grad())) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Softmax - Making a SoftmaxBackward node");
 				GetImpl(out)->gradfn() = std::make_shared<SoftmaxBackward>(A, out, ax);
 			}
 

@@ -16,7 +16,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	TransposeBackward::TransposeBackward(const Tensor& A, int dima, int dimb) : m_A(A), m_dima(dima), m_dimb(dimb) {
-
+		set_name("TransposeBackward");
 
 	}
 

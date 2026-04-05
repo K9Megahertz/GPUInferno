@@ -16,7 +16,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	ConcatBackward::ConcatBackward(const std::vector<Tensor> tensors, int axis) : m_tensors(tensors), m_axis(axis) {
-
+		set_name("ConcatBackward");
 
 	}
 

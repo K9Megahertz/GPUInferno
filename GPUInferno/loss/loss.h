@@ -51,19 +51,19 @@ namespace Inferno {
 				auto aptr = implpred->data_as_ptr<AT>();
 				auto bptr = impltarget->data_as_ptr<BT>();
 
-				Tensor out(dtype_of_v<RT>, std::vector<size_t>{1}, "mse_loss", prediction.device());
+				Tensor out(dtype_of_v<RT>, std::vector<size_t>{1}, "mse_loss", prediction.device(), true);
 				auto implOut = GetImpl(out);
 				auto optr = implOut->data_as_ptr<RT>();
 
 				switch (prediction.device().m_type) {
 
 				case DeviceType::CPU:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path: mse_loss");
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal mse_loss path");
 					cpu_mse_loss(aptr, bptr, optr, prediction.numel());
 					break;
 
 				case DeviceType::CUDA:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path: mse_loss");
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal mse_loss path");
 					cuda_mse_loss(aptr, bptr, optr, prediction.numel());
 					break;
 
@@ -72,7 +72,13 @@ namespace Inferno {
 					exit(1);
 				}
 
-				implOut->gradfn() = std::make_shared<MSELossBackward>(prediction, target);
+				
+					
+				
+				if ((Inferno::grad_enabled) && (prediction.requires_grad())) {
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MSELoss - Making a MSELossBackward node");
+					implOut->gradfn() = std::make_shared<MSELossBackward>(prediction, target);
+				}
 
 				return out;
 				});

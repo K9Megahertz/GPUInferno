@@ -22,7 +22,7 @@ namespace Inferno {
 			using RT = promote_t<AT, float>;
 					
 
-			Inferno::Tensor out(dtype_of_v<RT>, A.shape(), "gelu", A.device());
+			Inferno::Tensor out(dtype_of_v<RT>, A.shape(), "gelu", A.device(), true);
 
 			auto implA = GetImpl(A);
 			auto implout = GetImpl(out);
@@ -64,12 +64,12 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:				
 				if (A.is_contiguous() && out.is_contiguous()) {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using optimized gulu path");
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using optimized gelu path");
 					cuda_gelu(aptr, optr, N, aoffset);
 					
 				}
 				else {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using strided gulu path");
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using strided gelu path");
 					cuda_gelu_strided(aptr, optr, shape, astrides, ostrides, aoffset, ooffset);
 				}				
 				break;
@@ -79,7 +79,8 @@ namespace Inferno {
 				exit(1);
 			}
 
-			if ((Inferno::grad_enabled) && (A.requires_grad() || out.requires_grad())) {
+			if ((Inferno::grad_enabled) && (A.requires_grad())) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Gelu - Making an GeluBackward node");
 				implout->gradfn() = std::make_shared<GeluBackward>(A, out);
 			}
 

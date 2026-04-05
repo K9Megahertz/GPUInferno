@@ -50,7 +50,12 @@ namespace Inferno {
 			auto bptr = implB->data_as_ptr<BT>();
 
 
-			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "add", A.device());
+			bool gradreq = false;
+			if (Inferno::grad_enabled) {
+				gradreq = A.requires_grad() || B.requires_grad();
+			}
+
+			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "add", A.device(), gradreq);
 
 			auto implout = GetImpl(out);
 			auto optr = implout->data_as_ptr<RT>();
@@ -63,7 +68,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal add path");
 				cpu_add(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -71,7 +76,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal add path");
 				cuda_add(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -81,6 +86,7 @@ namespace Inferno {
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Add - Making a AddBackward node");
 				implout->gradfn() = std::make_shared<AddBackward>(A, B);
 			}
 
@@ -126,7 +132,12 @@ namespace Inferno {
 			auto bptr = implB->data_as_ptr<BT>();
 
 
-			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "subtract", A.device());
+			bool gradreq = false;
+			if (Inferno::grad_enabled) {
+				gradreq = A.requires_grad() || B.requires_grad();
+			}
+
+			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "subtract", A.device(), gradreq);
 
 			auto implout = GetImpl(out);
 			auto optr = implout->data_as_ptr<RT>();
@@ -139,7 +150,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal subtract path");
 				cpu_subtract(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -147,7 +158,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal subtract path");
 				cuda_subtract(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -157,6 +168,7 @@ namespace Inferno {
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Subtract - Making a SubtractBackward node");
 				implout->gradfn() = std::make_shared<SubtractBackward>(A, B);
 			}
 
@@ -199,7 +211,12 @@ namespace Inferno {
 			auto bptr = implB->data_as_ptr<BT>();
 
 
-			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "multiply", A.device());
+			bool gradreq = false;
+			if (Inferno::grad_enabled) {
+				gradreq = A.requires_grad() || B.requires_grad();
+			}
+
+			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "multiply", A.device(), gradreq);
 
 			auto implout = GetImpl(out);
 			auto optr = implout->data_as_ptr<RT>();
@@ -211,7 +228,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal multiply path");
 				cpu_multiply(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -219,7 +236,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");				
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal multiply path");
 				cuda_multiply(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -229,6 +246,7 @@ namespace Inferno {
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Multiply - Making a MultiplyBackward node");
 				implout->gradfn() = std::make_shared<MultiplyBackward>(A, B);
 			}
 
@@ -278,7 +296,12 @@ namespace Inferno {
 			auto bptr = implB->data_as_ptr<BT>();
 
 
-			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "divide", A.device());
+			bool gradreq = false;
+			if (Inferno::grad_enabled) {
+				gradreq = A.requires_grad() || B.requires_grad();
+			}
+
+			Inferno::Tensor out(dtype_of_v<RT>, broadcast_shape, "divide", A.device(), gradreq);
 
 			auto implout = GetImpl(out);
 			auto optr = implout->data_as_ptr<RT>();
@@ -291,7 +314,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal divide path");
 				cpu_divide(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -299,7 +322,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal divide path");
 				cuda_divide(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -309,6 +332,7 @@ namespace Inferno {
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Divide - Making a DivideBackward node");
 				implout->gradfn() = std::make_shared<DivideBackward>(A, B);
 			}
 
@@ -341,7 +365,12 @@ namespace Inferno {
 			//get pointers to data
 			auto aptr = implA->data_as_ptr<AT>();
 
-			Inferno::Tensor out(dtype_of_v<AT>, A.shape(), "negate", A.device());
+			bool gradreq = false;
+			if (Inferno::grad_enabled) {
+				gradreq = A.requires_grad();
+			}
+
+			Inferno::Tensor out(dtype_of_v<AT>, A.shape(), "negate", A.device(), gradreq);
 
 			auto implout = GetImpl(out);
 			auto optr = implout->data_as_ptr<AT>();
@@ -353,7 +382,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal negate path");
 				cpu_negate(aptr, optr, out.numel());
 				break;
 
@@ -361,7 +390,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal negate path");
 				cuda_negate<AT>(aptr, optr, out.numel());
 				break;
 
@@ -425,6 +454,7 @@ namespace Inferno {
 
 		
 		if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Matmul - Making a MMBackward node");
 			GetImpl(out)->gradfn() = std::make_shared<MMBackward>(A, B);
 		}
 			
@@ -519,7 +549,12 @@ namespace Inferno {
 			BT* bptr = GetImpl(B)->data_as_ptr<BT>();
 
 
-			Inferno::Tensor out(dtype_of_v<RT>, out_shape, "matmul", A.device());
+			bool gradreq = false;
+			if (Inferno::grad_enabled) {
+				gradreq = A.requires_grad() || B.requires_grad();
+			}
+
+			Inferno::Tensor out(dtype_of_v<RT>, out_shape, "matmul", A.device(), gradreq);
 
 			auto implout = GetImpl(out);
 			RT* optr = implout->data_as_ptr<RT>();
@@ -531,7 +566,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal matmul path");
 				cpu_matmul(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
 				break;
 
@@ -539,7 +574,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal matmul path");
 				cuda_matmul<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
 				break;
 
@@ -569,26 +604,34 @@ namespace Inferno {
 	Tensor transpose_impl(const Tensor& A, int dima, int dimb) {
 
 
-		if (dima == dimb) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Transpose: Dim A and Dim B match");
+		if (dima < 0)
+			dima += static_cast<int>(A.ndim());
+
+		if (dimb < 0)
+			dimb += static_cast<int>(A.ndim());
+
+		if (dima < 0 || dima >= static_cast<int>(A.ndim()) ||
+			dimb < 0 || dimb >= static_cast<int>(A.ndim())) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Transpose: dimension out of range");
 			exit(1);
 		}
 
+		if (dima == dimb) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Transpose: Dim A and Dim B match");
+			exit(1);
+		}	
 						
 
 		std::vector<size_t> newshape = A.shape();
-		std::vector<size_t> newstrides = A.strides();		
-
-			
-		if (dima < 0)
-			dima = dima + static_cast<int>(A.ndim());
-
-		if (dimb < 0)
-			dimb = dimb + static_cast<int>(A.ndim());
+		std::vector<size_t> newstrides = A.strides();					
+		
 
 		std::swap(newshape[dima], newshape[dimb]);
 		std::swap(newstrides[dima], newstrides[dimb]);
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal transpose path");
+
+		
 		Tensor out = make_view(A,newshape,newstrides,GetImpl(A)->offset(),"transpose_"+A.name());
 
 		return out;
@@ -652,11 +695,13 @@ namespace Inferno {
 		else
 			impl->set_base(GetImpl(base));
 		
-		impl->name() = name;
+		impl->name() = name;		
 		impl->id() = Inferno::IDBroker::GenID();			
+		impl->set_requires_grad(base_impl->requires_grad());
 		//Inferno::NodeTracker::addID(this->m_id, this->m_name);
 
 		out.device() = base.device();
+		
 		SetImpl(out,impl);
 		return out;
 	}
@@ -718,6 +763,7 @@ namespace Inferno {
 
 		size_t offset = A.offset() + A.strides()[axis] * start;
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal slice path");
 		Tensor view = make_view(A, newshape, newstrides, offset, "slice_of_" + A.name());
 
 		if ((Inferno::grad_enabled) && (A.requires_grad())) {
@@ -745,6 +791,8 @@ namespace Inferno {
 
 		std::vector<size_t> newstrides = Tensor::calculate_strides(newshape);
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal reshape path");
+		
 		Tensor out = make_view(A, newshape, newstrides, A.offset(), "reshape_of_" + A.name());
 
 		if ((Inferno::grad_enabled) && (A.requires_grad())) {
@@ -861,8 +909,18 @@ namespace Inferno {
 		}
 
 
+		bool req_grad = false;
+		for (const auto& t : tensors) {
+			if (t.requires_grad()) {
+				req_grad = true;
+				break;
+			}
+		}
+		//GetImpl(out)->set_requires_grad(req_grad);
+
+
 		//create the base for the output Tensor
-		Tensor out(dtype, out_shape, "concat", device);
+		Tensor out(dtype, out_shape, "concat", device, req_grad);
 
 		// prefix starts along concat axis
 		std::vector<size_t> axis_starts(tensors.size(), 0);
@@ -892,14 +950,7 @@ namespace Inferno {
 			src_offsets.push_back(t.offset());
 		}
 
-		bool req_grad = false;
-		for (const auto& t : tensors) {
-			if (t.requires_grad()) {
-				req_grad = true;
-				break;
-			}
-		}
-		//GetImpl(out)->set_requires_grad(req_grad);
+		
 
 		//if all tensors are contiguous we can use the optimized contiguious concat functions for speed increase.
 		bool fast_mode = true;
@@ -929,7 +980,7 @@ namespace Inferno {
 			switch (device.m_type) {
 
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal concat path");
 				cpu_concat<AT>(
 					src_ptrs,
 					optr,
@@ -947,7 +998,7 @@ namespace Inferno {
 				break;
 
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal concat path");
 				cuda_concat<AT>(
 					src_ptrs,
 					optr,
@@ -971,6 +1022,7 @@ namespace Inferno {
 			});
 
 		if ((Inferno::grad_enabled) && (req_grad)) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Concat - Making a ConcatBackward node");
 			GetImpl(out)->gradfn() = std::make_shared<ConcatBackward>(tensors, axis);
 
 		}
@@ -1016,9 +1068,11 @@ namespace Inferno {
 		new_shape.erase(new_shape.begin() + ax);
 		new_strides.erase(new_strides.begin() + ax);
 
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal select path");
 		Tensor out = make_view(A, new_shape, new_strides, new_offset, A.name() + ".select");
 
 		if (Inferno::grad_enabled && A.requires_grad()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Select - Making a SelectBackward node");
 			GetImpl(out)->gradfn() = std::make_shared<SelectBackward>(A, ax, index);
 		}
 

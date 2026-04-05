@@ -29,7 +29,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void Engine::backward(const Tensor tensor) {
+	void Engine::backward(const Tensor& tensor) {
 
 
 		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** running backward ***********");
@@ -51,26 +51,36 @@ namespace Inferno {
 		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** building topo ***********");
 		build_topo(root, visited, topo);
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Built topo with size: " + topo.size());
+		if (topo.empty())
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** topo  was empty ***********");
+		else
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Built topo with size: " + std::to_string(topo.size()));
 
 		Tensor seed = Tensor::ones_like(tensor);
-		accumulate(root.get(), 0, seed);
+			accumulate(root.get(), 0, seed);
 
+
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** starting backward iterations ***********");
 
 		//loop through all of the nodes and call the backward function
 		//these should all be in progressive order from back to front now
 		int count = 0;
 		for (auto it = topo.rbegin(); it != topo.rend(); it++) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Engine backward step: " + (*it)->name());
 			(*it)->backward();  // Perform the gradient accumulation for the current node							
 			count++;
 		}
 
 
-		for (Node* n : topo) {
-			n->release();
+		for (auto it = topo.begin(); it != topo.end(); it++) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Engine releasing: " + (*it)->name());
+			(*it)->release();
 		}
-		topo.clear();
+
+		topo.clear();		
+
 		s_grad_map->clear();
+		s_grad_map = nullptr;
 
 
 	}
@@ -110,8 +120,6 @@ namespace Inferno {
 
 			//loop over each input
 			for (auto& input : inputlist) {
-
-
 				auto parent = GetImpl(input)->grad_edge();
 				if (parent) //does it have a parent
 					build_topo(parent, visited, topo);

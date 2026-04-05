@@ -16,7 +16,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	EmbeddingBackward::EmbeddingBackward(const Tensor& A, const Tensor& B) : m_embeddings(A), m_token_ids(B) {
-
+		set_name("EmbeddingBackward");
 
 	}
 

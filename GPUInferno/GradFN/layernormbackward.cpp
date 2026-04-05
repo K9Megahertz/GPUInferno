@@ -1,5 +1,4 @@
-#include "gelubackward.h"
-
+#include "layernormbackward.h"
 
 namespace Inferno {
 
@@ -15,9 +14,17 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	GeluBackward::GeluBackward(const Tensor& A, const Tensor& out) : m_A(A), m_out(out) {
-		set_name("GeluBackward");
+	LayerNormBackward::LayerNormBackward(
+		const Tensor& A,
+		const Tensor& gamma,
+		const Tensor& beta,
+		const Tensor& mean,
+		const Tensor& invstd,
+		size_t dim
+	)
+		: m_A(A), m_gamma(gamma), m_beta(beta), m_mean(mean), m_invstd(invstd), m_dim(dim) {
 
+		set_name("LayerNormBackward");
 	}
 
 
@@ -32,29 +39,37 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void GeluBackward::backward() {
+	void LayerNormBackward::backward() {
 
 		NoGradGuard guard;
-		Tensor g_out = Engine::grad_in(this, 0);
 
-		Tensor g_a = dispatchTwo(m_out.dtype(), g_out.dtype(), [&](auto TA, auto TG) {
+		Tensor g_out = Engine::grad_in(this, 0); // same shape as input
+
+		const size_t num_batches = std::accumulate(
+			m_A.shape().begin(),
+			m_A.shape().end() - 1,
+			static_cast<size_t>(1),
+			std::multiplies<size_t>()
+		);
+
+		dispatchOne(m_A.dtype(), [&](auto TA) {
 			using AT = typename decltype(TA)::type;
-			using GT = typename decltype(TG)::type;
-			using RT = promote_t<AT, GT>;
+			using RT = promote_t<AT, float>;   // gamma/beta/mean/invstd are float
 
+			Tensor g_a(dtype_of_v<RT>, m_A.shape(), "layernorm_grad_a", m_A.device());
+			Tensor g_gamma(DType::Float32, m_gamma.shape(), "layernorm_grad_gamma", m_gamma.device());
+			Tensor g_beta(DType::Float32, m_beta.shape(), "layernorm_grad_beta", m_beta.device());
 
+			auto aptr = GetImpl(m_A)->data_as_ptr<AT>();
+			auto goutptr = GetImpl(g_out)->data_as_ptr<AT>();
 
+			auto gptr = GetImpl(m_gamma)->data_as_ptr<float>();
+			auto meanptr = GetImpl(m_mean)->data_as_ptr<float>();
+			auto invstdptr = GetImpl(m_invstd)->data_as_ptr<float>();
 
-			Inferno::Tensor out(dtype_of_v<RT>, m_A.shape(), "GeluBackward", m_A.device());
-
-
-			//get pointers to data
-			AT* aptr = GetImpl(m_A)->data_as_ptr<AT>();
-			GT* gptr = GetImpl(g_out)->data_as_ptr<GT>();
-			RT* optr = GetImpl(out)->data_as_ptr<RT>();
-
-			const size_t N = out.numel();
-			const size_t off = GetImpl(m_A)->offset();
+			auto gaptr = GetImpl(g_a)->data_as_ptr<RT>();
+			auto ggptr = GetImpl(g_gamma)->data_as_ptr<float>();
+			auto gbptr = GetImpl(g_beta)->data_as_ptr<float>();
 
 
 			switch (g_out.device().m_type) {
@@ -63,16 +78,38 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal gelu backward path");
-				cpu_gelu_backward(aptr, gptr, optr, N, off);
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal layernorm_backward path");
+				cpu_layernorm_backward(
+					aptr,
+					goutptr,
+					gptr,
+					meanptr,
+					invstdptr,
+					gaptr,
+					ggptr,
+					gbptr,
+					num_batches,
+					m_dim
+				);
 				break;
 
 				////////////////////////////////////////////////////
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal gelu backward path");
-				cuda_gelu_backward(aptr, gptr, optr, N, off);
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal layernorm_backward path");
+				cuda_layernorm_backward(
+					aptr,
+					goutptr,
+					gptr,
+					meanptr,
+					invstdptr,
+					gaptr,
+					ggptr,
+					gbptr,
+					num_batches,
+					m_dim
+				);
 				break;
 
 			default:
@@ -80,19 +117,20 @@ namespace Inferno {
 				exit(1);
 			}
 
-			return out;
 
+			auto na = GetImpl(m_A)->grad_edge();
+			auto ng = GetImpl(m_gamma)->grad_edge();
+			auto nb = GetImpl(m_beta)->grad_edge();
+
+			if (na)
+				Engine::accumulate(na.get(), 0, g_a);
+
+			if (ng)
+				Engine::accumulate(ng.get(), 0, g_gamma);
+
+			if (nb)
+				Engine::accumulate(nb.get(), 0, g_beta);
 			});
-
-
-		// find parent nodes
-		auto na = GetImpl(m_A)->grad_edge();
-
-
-		// send gradients upstream
-		if (na)
-			Engine::accumulate(na.get(), 0, g_a);
-
 	}
 
 
@@ -107,11 +145,12 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void GeluBackward::release() {
-		// drop references so graph can free
+	void LayerNormBackward::release() {
 		m_A = Tensor{};
-		m_out = Tensor{};
-
+		m_gamma = Tensor{};
+		m_beta = Tensor{};
+		m_mean = Tensor{};
+		m_invstd = Tensor{};
 	}
 
 
@@ -126,9 +165,10 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void GeluBackward::get_inputs(std::vector<Tensor>& out) const {
+	void LayerNormBackward::get_inputs(std::vector<Tensor>& out) const {
 		out.push_back(m_A);
-
+		out.push_back(m_gamma);
+		out.push_back(m_beta);
 	}
 
 

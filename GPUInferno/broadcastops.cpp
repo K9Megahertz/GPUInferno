@@ -80,7 +80,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal sum_to_shape path");
 				cpu_sum_to_shape(dst_ptr, src_ptr, src_numel, src_rank, src_shape, temp_dst_strides, out_numel);
 
 				break;
@@ -89,7 +89,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal sum_to_shape path");
 				cuda_sum_to_shape(dst_ptr, src_ptr, src_numel, src_rank, src_shape, temp_dst_strides, out_numel);
 				break;
 
@@ -163,7 +163,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal scatter_add_embedding path");
 				cpu_scatter_add_embedding(gptr, tptr, optr, embed_dim, numtokens);
 
 				break;
@@ -172,7 +172,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal scatter_add_embedding path");
 				cuda_scatter_add_embedding(gptr, tptr, optr, embed_dim, numtokens);
 				break;
 
@@ -263,7 +263,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal scatter_add_slice path");
 				cpu_scatter_add_slice(optr, gptr, out.shape(), out.strides(), out.offset(), g_out.shape(), g_out.strides(), g_out.offset(), g_out.numel(), axis, start, step);
 
 				break;
@@ -272,7 +272,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal scatter_add_slice path");
 				cuda_scatter_add_slice(optr, gptr, out.shape(), out.strides(), out.offset(), g_out.shape(), g_out.strides(), g_out.offset(), g_out.numel(), axis, start, step);
 				break;
 

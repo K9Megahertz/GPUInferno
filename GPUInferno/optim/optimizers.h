@@ -75,6 +75,8 @@ namespace Inferno {
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         void step() {
+
+            Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Performing SGD optmizier step");
             for (auto& p : params) {
                 auto grad = GetImpl(*p)->grad();
 
@@ -101,7 +103,7 @@ namespace Inferno {
                     using BT = typename decltype(TB)::type;
 
 
-                    AT* dptr = GetImpl(*p)->data_as_ptr<AT>();
+                     AT* dptr = GetImpl(*p)->data_as_ptr<AT>();
                     BT* gptr = GetImpl(*grad)->data_as_ptr<BT>();
 
                     size_t count = p->numel();
@@ -114,7 +116,7 @@ namespace Inferno {
                         // CPU Code Path
                         ////////////////////////////////////////////////////
                     case DeviceType::CPU:
-                        Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+                        Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal step path");
                         cpu_step_impl(dptr, gptr, count);
                         break;
 
@@ -122,7 +124,7 @@ namespace Inferno {
                         // CUDA Code Path
                         ////////////////////////////////////////////////////
                     case DeviceType::CUDA:
-                        Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+                        Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal step path");
                         cuda_step_impl(dptr, gptr, count, lr);
                         break;
 

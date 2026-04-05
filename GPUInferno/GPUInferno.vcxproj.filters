@@ -132,6 +132,9 @@
     <ClCompile Include="GradFN\selectbackward.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GradFN\layernormbackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tensor.h">
@@ -287,6 +290,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GradFN\selectbackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GradFN\layernormbackward.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

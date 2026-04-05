@@ -16,7 +16,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	SoftmaxBackward::SoftmaxBackward(const Tensor& A, const Tensor& out, int axis) : m_A(A), m_out(out), m_axis(axis) {
-
+		set_name("SoftmaxBackward");
 	}
 
 
@@ -69,7 +69,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal softmax backward path");
 				cpu_softmax_backward(
 					aptr,
 					gptr,
@@ -89,7 +89,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal softmax backward path");
 				cuda_softmax_backward(
 					aptr,
 					gptr,

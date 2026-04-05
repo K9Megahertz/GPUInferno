@@ -42,7 +42,7 @@ namespace Inferno {
 				std::exit(1);
 			}
 
-			m_weights = Tensor(dtype, weight_data, { in_features, out_features }, "weights", device);
+			m_weights = Tensor(dtype, weight_data, { in_features, out_features }, "weights", device, true);
 			
 			
 		
@@ -64,7 +64,7 @@ namespace Inferno {
 				std::exit(1);
 			}
 
-			m_biases = Tensor(dtype, bias_data, { out_features }, "biases",device);
+			m_biases = Tensor(dtype, bias_data, { out_features }, "biases",device, true);
 			
 
 		});

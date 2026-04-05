@@ -167,6 +167,7 @@
     <ClCompile Include="GradFN\dividebackward.cpp" />
     <ClCompile Include="GradFN\embeddingbackward.cpp" />
     <ClCompile Include="GradFN\gelubackward.cpp" />
+    <ClCompile Include="GradFN\layernormbackward.cpp" />
     <ClCompile Include="GradFN\mmbackward.cpp" />
     <ClCompile Include="GradFN\mselossbackward.cpp" />
     <ClCompile Include="GradFN\multiplybackward.cpp" />
@@ -211,6 +212,7 @@
     <ClInclude Include="GradFN\addbackward.h" />
     <ClInclude Include="GradFN\dividebackward.h" />
     <ClInclude Include="GradFN\gelubackward.h" />
+    <ClInclude Include="GradFN\layernormbackward.h" />
     <ClInclude Include="GradFN\mmbackward.h" />
     <ClInclude Include="GradFN\mselossbackward.h" />
     <ClInclude Include="GradFN\negatebackward.h" />

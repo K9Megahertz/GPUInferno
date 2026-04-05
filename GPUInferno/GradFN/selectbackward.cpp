@@ -4,6 +4,8 @@ namespace Inferno {
 
 	SelectBackward::SelectBackward(const Tensor& A, int axis, size_t index)
 		: m_A(A), m_axis(axis), m_index(index) {
+		set_name("SelectBackward");
+
 	}
 
 	void SelectBackward::backward() {
@@ -20,12 +22,21 @@ namespace Inferno {
 
 			// zero initialize
 			switch (m_A.device().m_type) {
-			case DeviceType::CPU: {				
+			////////////////////////////////////////////////////
+			// CPU Code Path
+			////////////////////////////////////////////////////
+			case DeviceType::CPU: {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal select backward path");
 				for (size_t i = 0; i < out.numel(); ++i)
 					optr[i] = static_cast<RT>(0);
 				break;
 			}
+
+			////////////////////////////////////////////////////
+			// CUDA Code Path
+			////////////////////////////////////////////////////
 			case DeviceType::CUDA:				
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal select backward path");
 				Inferno::cuda_fill(optr, RT(0), out.numel());
 				break;
 			default:

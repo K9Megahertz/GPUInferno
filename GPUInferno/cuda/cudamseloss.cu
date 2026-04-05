@@ -216,9 +216,7 @@ namespace Inferno {
 
         cudaError_t err = cudaGetLastError();
         if (err != cudaSuccess) {
-            Logger::Append(
-                Logger::LogLevel::LOGLEVEL_ERROR,
-                std::string("mse_loss_backward_kernel launch failed: ") + cudaGetErrorString(err)
+            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string("mse_loss_backward_kernel launch failed: ") + cudaGetErrorString(err)
             );
             exit(1);
         }
@@ -227,9 +225,7 @@ namespace Inferno {
 
         err = cudaGetLastError();
         if (err != cudaSuccess) {
-            Logger::Append(
-                Logger::LogLevel::LOGLEVEL_ERROR,
-                std::string("mse_loss_backward_kernel execution failed: ") + cudaGetErrorString(err)
+            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string("mse_loss_backward_kernel execution failed: ") + cudaGetErrorString(err)
             );
             exit(1);
         }

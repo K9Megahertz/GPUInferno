@@ -32,12 +32,10 @@ namespace Inferno {
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Embedding::Embedding(size_t vocab_size, size_t embed_dim, Device device, DType dtype) {
-        dispatchOne(dtype, [&](auto TagA) {
-            using AT = typename decltype(TagA)::type;
-            NoGradGuard guard;
-            m_embeddings = Tensor::randn(dtype,{ vocab_size, embed_dim }, "embedding", device) * 0.1;
-            
-        });
+
+        NoGradGuard guard;
+        m_embeddings = Tensor::randn(dtype,{ vocab_size, embed_dim }, "embedding", device) * 0.1; 
+        GetImpl(m_embeddings)->set_requires_grad(true);
         register_parameter(m_embeddings); // so optimizer will see it
     }
 
@@ -58,11 +56,18 @@ namespace Inferno {
 
         bool a_vec = (token_ids.ndim() == 1);
 
-        Tensor token_ids_view = make_view(token_ids, token_ids.shape(), token_ids.strides(), 0, "token_ids");
+        Tensor token_ids_view = make_view(token_ids, token_ids.shape(), token_ids.strides(), token_ids.offset(), "token_ids");
         
+        //if (a_vec) {
+            //token_ids_view.shape() = { 1, token_ids_view.shape()[0] };
+            //token_ids_view.strides() = token_ids_view.calculate_strides(token_ids_view.shape());
+        //}
+
         if (a_vec) {
-            token_ids_view.shape() = { 1, token_ids_view.shape()[0] };
-            token_ids_view.strides() = token_ids_view.calculate_strides(token_ids_view.shape());
+            size_t old_len = token_ids_view.shape()[0];
+            size_t old_stride = token_ids_view.strides()[0];
+            token_ids_view.shape() = { 1, old_len };
+            token_ids_view.strides() = { old_len * old_stride, old_stride };
         }
 
         Tensor out = embedding_impl(token_ids_view, m_embeddings);
@@ -72,8 +77,9 @@ namespace Inferno {
 
         out.strides() = out.calculate_strides(out.shape());
 
-        if ((Inferno::grad_enabled) && (m_embeddings.requires_grad() || token_ids.requires_grad())) {
-            GetImpl(out)->gradfn() = std::make_shared<EmbeddingBackward>(m_embeddings, token_ids);
+        if ((Inferno::grad_enabled) && (m_embeddings.requires_grad())) {
+            Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Embedding - Making an EmbeddingBackward node");
+            GetImpl(out)->gradfn() = std::make_shared<EmbeddingBackward>(m_embeddings, token_ids_view);
         }
 
         
@@ -101,8 +107,8 @@ namespace Inferno {
         size_t embed_dim = m_embeddings.shape()[1];   // E
         size_t vocab_size = m_embeddings.shape()[0]; //i dont think we need this for anything
 
-
-        Inferno::Tensor out(m_embeddings.dtype(), { num_batches, seq_len, embed_dim }, "embedding_out", token_ids.device());
+        bool req = m_embeddings.requires_grad();
+        Inferno::Tensor out(m_embeddings.dtype(), { num_batches, seq_len, embed_dim }, "embedding_out", token_ids.device(), req);
 
 
         return dispatchTwo(m_embeddings.dtype(), token_ids.dtype(), [&](auto TagA, auto TagB) {
@@ -120,7 +126,7 @@ namespace Inferno {
                 // CPU Code Path
                 ////////////////////////////////////////////////////
             case DeviceType::CPU:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path");
+                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal embedding path");
                 cpu_embedding(tptr, eptr, optr, num_batches, seq_len, embed_dim);
                 break;
 
@@ -128,7 +134,7 @@ namespace Inferno {
                 // CUDA Code Path
                 ////////////////////////////////////////////////////
             case DeviceType::CUDA:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path");
+                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal embedding path");
                 cuda_embedding(tptr, eptr, optr, num_batches, seq_len, embed_dim);
                 break;
 

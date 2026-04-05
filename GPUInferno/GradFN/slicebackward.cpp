@@ -15,7 +15,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	SliceBackward::SliceBackward(const Tensor& A,int axis,size_t start,	size_t step, const std::vector<size_t>& view_shape)	: m_A(A), m_axis(axis), m_start(start), m_step(step), m_view_shape(view_shape) {
-
+		set_name("SliceBackward");
 
 	}
 
