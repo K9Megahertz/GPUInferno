@@ -555,6 +555,7 @@ namespace Inferno {
 		out.shape() = this->shape();
 		out.offset() = this->offset();
 		out.strides() = this->strides();
+		out.set_requires_grad(this->requires_grad());
 
 		//size_t bytes = m_impl->nbytes();
 		size_t bytes = m_impl->data()->m_numbytes;

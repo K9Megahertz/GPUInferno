@@ -524,8 +524,8 @@ int main() {
 
 
 	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_ERROR);
-	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
-	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
+	//Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_DEBUG);
+	Logger::SetLogLevel(Logger::LogLevel::LOGLEVEL_INFO);
 	Logger::Start("logs/applicationlog.txt");
 
 	Inferno::RandomGenerator::initializeWithSeed(42);
@@ -553,19 +553,19 @@ int main() {
 
 
 	//Sane
-	size_t vocabulary_size = 32;
-	size_t context_size = 128;
-	size_t embedding_dim = 256;
-	size_t numheads = 1;
-	size_t numblocks = 1;
+	//size_t vocabulary_size = 32;
+	//size_t context_size = 128;
+	//size_t embedding_dim = 256;
+	//size_t numheads = 1;
+	//size_t numblocks = 1;
 
 
 	//GPT 2
-	//size_t vocabulary_size = 50257;
-	//size_t context_size = 256;
-	//size_t embedding_dim = 768;
-	//size_t numheads = 16;
-	//size_t numblocks = 16;
+	size_t vocabulary_size = 50257;
+	size_t context_size = 1024;
+	size_t embedding_dim = 768;
+	size_t numheads = 16;
+	size_t numblocks = 16;
 
 
 
@@ -604,7 +604,7 @@ int main() {
 	Inferno::Timer t1("matmul");
 
 	int epochs = 1;
-	int loopcount = 1;
+	int loopcount = 10000;
 	for (int e = 0; e < epochs; e++) {
 		for (int i = 0; i < loopcount; i++) {
 
@@ -635,7 +635,7 @@ int main() {
 
 			Inferno::Tensor lossp = loss.to(Inferno::Device::cpu());
 
-			std::cout << std::fixed << "Epoch: " << e << " Iter: " << i << "  total took: " << std::setprecision(3) << t1.elapsed_ms() << " ms  Loss: " << std::setprecision(8) << lossp.item<float>() << std::endl;
+			std::cout << std::fixed << "Epoch: " << e << " Iter: " << i << "  total took: " << std::setprecision(3) << t1.elapsed_ms() << " ms  Loss: " << std::setprecision(12) << lossp.item<float>() << std::endl;
 			//std::cout << loss << std::endl;
 			//std::cout << prediction.to(Inferno::Device::cpu()) << std::endl;
 
