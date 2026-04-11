@@ -10,6 +10,7 @@
 #include "mselosstests.h"
 
 
+
 void RunAdditionTests(Inferno::Device device);
 void RunSubtractionTests(Inferno::Device device);
 void RunMultiplicationTests(Inferno::Device device);
@@ -37,6 +38,7 @@ void RunTests() {
     RunMSELossTests(Inferno::Device::cpu());
     RunMSELossTests(Inferno::Device::cuda(0));
 
+  
 
 }
 

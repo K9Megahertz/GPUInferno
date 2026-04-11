@@ -145,6 +145,9 @@ namespace Inferno {
 		size_t index
 	);
 
+	template<typename T>
+	void cuda_contiguous_copy(const T* aptr, T* optr, const std::vector<size_t>& shape, const std::vector<size_t>& strides, size_t offset, size_t N); 
+
 
 	inline void check_cuda(cudaError_t err, const char* msg) {
 		if (err != cudaSuccess) {			

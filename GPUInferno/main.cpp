@@ -250,6 +250,105 @@ private:
 	Inferno::Linear W_out;
 };
 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Class MultiHeadAttentionFast
+//
+//
+//
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+class MultiHeadAttentionFast : public Inferno::Module {
+public:
+	MultiHeadAttentionFast(size_t embed_dim, size_t num_heads) :
+		m_embed_dim(embed_dim),
+		m_num_heads(num_heads),
+		m_head_dim(embed_dim / num_heads),
+		W_out(embed_dim, embed_dim),
+		Wqkv_layer(embed_dim, embed_dim*3)
+	{
+
+		
+		register_module(&Wqkv_layer);			
+		
+
+		// final output projection after concatenation		
+		register_module(&W_out);
+
+	}
+
+	Inferno::Tensor forward(Inferno::Tensor& x) override {
+
+		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Multihead Attention forward");
+		
+
+		auto shape = x.shape();
+
+		if (shape.size() != 3) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "MultiHeadAttentionFast expects [B, T, C]");
+			exit(1);
+		}
+
+		size_t B = shape[0];
+		size_t T = shape[1];
+		size_t C = shape[2];
+		
+		auto qkv = Wqkv_layer.forward(x);			
+			
+
+		Inferno::Tensor q = qkv.slice(2, 0, m_embed_dim - 1);                  // [B, T, C]
+		Inferno::Tensor k = qkv.slice(2, m_embed_dim, 2 * m_embed_dim - 1);    // [B, T, C]
+		Inferno::Tensor v = qkv.slice(2, 2 * m_embed_dim, 3 * m_embed_dim - 1);// [B, T, C]
+
+		q = q.contiguous();
+		k = k.contiguous();
+		v = v.contiguous();
+
+		q = q.reshape({ B, T, m_num_heads, m_head_dim });           // [B, T, H, D]
+		k = k.reshape({ B, T, m_num_heads, m_head_dim });
+		v = v.reshape({ B, T, m_num_heads, m_head_dim });
+
+		q = q.transpose(1, 2);                                    // [B, H, T, D]
+		k = k.transpose(1, 2);                                    // [B, H, T, D]
+		v = v.transpose(1, 2);                                    // [B, H, T, D]
+
+
+			
+		Inferno::Tensor kt = k.transpose(-1, -2);                          // [B, H, D, T]
+
+		Inferno::Tensor scores = matmul(q, kt);                             // [B, H, T, T]
+		float scale = 1.0f / std::sqrt((float)m_head_dim);
+		scores = scores * scale;		
+
+		Inferno::Tensor attn = Inferno::Softmax(scores, -1);                         // [B, H, T, T]
+
+		Inferno::Tensor y = matmul(attn, v);                                // [B, H, T, D]
+
+		y = y.transpose(1, 2);                                    // [B, T, H, D]
+		y = y.contiguous();
+		y = y.reshape({ B, T, m_embed_dim });                       // [B, T, C]
+
+		y = W_out.forward(y);                                   // [B, T, C]
+
+		
+		return y;
+	}
+
+private:
+	size_t m_embed_dim;
+	size_t m_num_heads;
+	size_t m_head_dim;
+
+	Inferno::Linear Wqkv_layer;	
+	Inferno::Linear W_out;
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

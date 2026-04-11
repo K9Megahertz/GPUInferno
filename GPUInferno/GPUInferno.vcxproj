@@ -164,6 +164,7 @@
     <ClCompile Include="GradFN\accumulategrad.cpp" />
     <ClCompile Include="GradFN\addbackward.cpp" />
     <ClCompile Include="GradFN\concatbackward.cpp" />
+    <ClCompile Include="GradFN\contiguousbackward.cpp" />
     <ClCompile Include="GradFN\dividebackward.cpp" />
     <ClCompile Include="GradFN\embeddingbackward.cpp" />
     <ClCompile Include="GradFN\gelubackward.cpp" />
@@ -205,6 +206,7 @@
     <ClInclude Include="functional\gelu.h" />
     <ClInclude Include="functional\softmax.h" />
     <ClInclude Include="GradFN\concatbackward.h" />
+    <ClInclude Include="GradFN\contiguousbackward.h" />
     <ClInclude Include="GradFN\embeddingbackward.h" />
     <ClInclude Include="functional\sigmoid.h" />
     <ClInclude Include="GradFN\accumulategrad.h" />
@@ -253,6 +255,7 @@
     <ClInclude Include="tensorimpl.h" />
     <ClInclude Include="Util\timer.h" />
     <CudaCompile Include="cuda\cudaconcat.cu" />
+    <CudaCompile Include="cuda\cudacontiguous.cu" />
     <CudaCompile Include="cuda\cudadivide.cu" />
     <CudaCompile Include="cuda\cudaembedding.cu" />
     <CudaCompile Include="cuda\cudagelu.cu" />

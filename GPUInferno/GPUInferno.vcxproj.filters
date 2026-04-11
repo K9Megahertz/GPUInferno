@@ -135,6 +135,9 @@
     <ClCompile Include="GradFN\layernormbackward.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GradFN\contiguousbackward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tensor.h">
@@ -295,6 +298,9 @@
     <ClInclude Include="GradFN\layernormbackward.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GradFN\contiguousbackward.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cuda\cudaadd.cu" />
@@ -316,5 +322,6 @@
     <CudaCompile Include="cuda\cudasoftmax.cu" />
     <CudaCompile Include="cuda\cudagelu.cu" />
     <CudaCompile Include="cuda\cudaselectbackward.cu" />
+    <CudaCompile Include="cuda\cudacontiguous.cu" />
   </ItemGroup>
 </Project>

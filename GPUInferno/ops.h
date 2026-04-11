@@ -14,6 +14,7 @@ namespace Inferno {
 	Tensor matmul_impl(const Tensor& A, const Tensor& B);
 	Tensor transpose_impl(const Tensor& A, int dima, int dimb);
 	Tensor reshape_impl(Tensor& A, const std::vector<size_t>& newshape);
+	Tensor contiguous_impl(const Tensor& A);
 	Tensor concat(const std::vector<Tensor>& tensors, int axis = 0);
 	Tensor select(const Tensor& A, int axis, size_t index);
 	Tensor make_view(const Tensor& base, const std::vector<size_t>& new_shape, const std::vector<size_t>& new_strides, size_t new_storage_offset, const std::string& name);
@@ -542,6 +543,44 @@ namespace Inferno {
 			optr[dst_storage_idx] = src_ptrs[tensor_idx][src_storage_idx];
 		}
 	}
+
+	static std::vector<size_t> unravel_index(size_t linear, const std::vector<size_t>& shape) {
+		std::vector<size_t> idx(shape.size(), 0);
+
+		for (int i = static_cast<int>(shape.size()) - 1; i >= 0; --i) {
+			idx[i] = linear % shape[i];
+			linear /= shape[i];
+		}
+
+		return idx;
+	}
+
+	static size_t offset_from_index(
+		const std::vector<size_t>& idx,
+		const std::vector<size_t>& strides,
+		size_t base_offset)
+	{
+		size_t off = base_offset;
+		for (size_t i = 0; i < idx.size(); ++i) {
+			off += idx[i] * strides[i];
+		}
+		return off;
+	}
+
+
+	template<typename AT>
+	void cpu_contiguous_copy(const AT* aptr, AT* optr, const std::vector<size_t>& shape, const std::vector<size_t>& strides, size_t offset, size_t N) {
+		
+		for (size_t linear = 0; linear < N; ++linear) {
+			std::vector<size_t> idx = unravel_index(linear, shape);
+
+			size_t src_off = offset_from_index(idx, strides, offset);
+
+			// dst is contiguous, so linear index matches physical index
+			optr[linear] = aptr[src_off];
+		}
+	}
+
 }
 
 

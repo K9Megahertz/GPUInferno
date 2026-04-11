@@ -152,6 +152,7 @@ namespace Inferno {
 		friend Tensor transpose_impl(const Tensor& A, int dima, int dimb);		
 		friend Tensor slice_impl(const Tensor& A, int axis, const size_t start, const size_t end, const size_t step);
 		friend Tensor reshape_impl(const Tensor& A, const std::vector<size_t>& newshape);
+		friend Tensor contiguous_impl(const Tensor& A);
 
 		friend Tensor negate(const Tensor& A);
 
@@ -264,6 +265,8 @@ namespace Inferno {
 		Tensor unsqueeze(int dim) const;		
 		Tensor slice(int axis, const size_t start, const size_t end, const size_t step = 1);
 		Tensor reshape(const std::vector<size_t>& newshape) const;
+
+		Tensor contiguous() const;
 		void backward();
 
 		

@@ -10,6 +10,7 @@
 #include "GradFN/reshapebackward.h"
 #include "GradFN/concatbackward.h"
 #include "GradFN/selectbackward.h"
+#include "GradFN/contiguousbackward.h"
 
 namespace Inferno {
 
@@ -1077,6 +1078,59 @@ namespace Inferno {
 		if (Inferno::grad_enabled && A.requires_grad()) {
 			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Select - Making a SelectBackward node");
 			GetImpl(out)->gradfn() = std::make_shared<SelectBackward>(A, ax, index);
+		}
+
+		return out;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//
+	//  Function contiguous_impl
+	//
+	//
+	//
+	//
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	Tensor contiguous_impl(const Tensor& A) {
+		// already contiguous -> no need to copy
+		if (A.is_contiguous()) {
+			return A;
+		}
+
+		Tensor out(A.dtype(), A.shape(), "contiguous_of_" + A.name(), A.device());
+
+
+		dispatchOne(A.dtype(), [&](auto TagA) {
+			using AT = typename decltype(TagA)::type;
+
+			//get pointers to data
+			auto ImplA = GetImpl(A);
+			auto Implout = GetImpl(out);
+
+			AT* aptr = ImplA->data_as_ptr<AT>();
+			AT* optr = Implout->data_as_ptr<AT>();
+
+			std::vector<size_t> shape = A.shape();
+			std::vector<size_t> strides = A.strides();
+			size_t offset = A.offset();
+			size_t N = A.numel();
+
+			if (A.device().is_cpu()) {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal contiguous path");
+				cpu_contiguous_copy(aptr, optr, shape, strides, offset, N);
+			}
+			else {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal contiguous path");
+				cuda_contiguous_copy(aptr, optr, shape, strides, offset, N);
+			}
+		});
+
+		if (Inferno::grad_enabled && A.requires_grad()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Select - Making a ContiguousBackward node");
+			GetImpl(out)->gradfn() = std::make_shared<ContiguousBackward>(A);
 		}
 
 		return out;
