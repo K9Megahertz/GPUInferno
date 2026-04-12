@@ -1,2 +1,2 @@
-# GPUInferno
+# Inferno
 C++ AI library
