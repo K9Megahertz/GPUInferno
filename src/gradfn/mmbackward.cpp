@@ -44,8 +44,8 @@ namespace Inferno {
         bool b_vec = (m_B.ndim() == 1);
 
 
-		Tensor A2 = make_view(m_A, m_A.shape(), m_A.strides(), 0, "A2");
-		Tensor B2 = make_view(m_B, m_B.shape(), m_B.strides(), 0, "B2");
+		Tensor A2 = make_view(m_A, m_A.shape(), m_A.strides(), m_A.offset(), "A2");
+		Tensor B2 = make_view(m_B, m_B.shape(), m_B.strides(), m_B.offset(), "B2");
 		Tensor G2 = g_out;
 
 
@@ -74,10 +74,10 @@ namespace Inferno {
 
 
         // dA = g_out @ B^T
-        Tensor g_a = matmul(G2, B2.transpose(-1, -2));        
+        Tensor g_a = matmul(G2, B2.transpose(-1, -2).contiguous(), "Backward");
 
         // dB = A^T @ g_out
-        Tensor g_b = matmul(A2.transpose(-1, -2), G2);
+        Tensor g_b = matmul(A2.transpose(-1, -2).contiguous(), G2, "Backward");
         
 
         // Reduce back to original input shapes in case batch broadcasting occurred

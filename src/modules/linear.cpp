@@ -18,7 +18,7 @@ namespace Inferno {
 
 	Linear::Linear(size_t in_features, size_t out_features, Device device, DType dtype) {
 
-		float limit = sqrt(6 / (in_features + out_features));
+		float limit = sqrt(6.0f / static_cast<float>(in_features + out_features));
 
 
 		float lowrange = -limit;
@@ -99,7 +99,7 @@ namespace Inferno {
 	Tensor Linear::forward(const Tensor& input) {
 
 	
-		Tensor matmul = Inferno::matmul(input, m_weights);
+		Tensor matmul = Inferno::matmul(input, m_weights, "Linear");
 		Tensor ret = matmul + m_biases;
 		
 		return ret;

@@ -1,38 +1,42 @@
 #pragma once
-#include <chrono>
+
 #include <string>
+#include <vector>
+#include <chrono>
+#include <utility>
 
 namespace Inferno {
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Class Timer
-    //
-    //
-    //
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-
-    class Timer
-    {
+    class Timer {
     public:
-        Timer(const std::string& name = "");
+        Timer(const std::string& name = "Timer");
 
         void start();
+        void lap(const std::string& label);
         void stop();
 
         double elapsed_ms() const;
         double elapsed_sec() const;
 
+        bool is_running() const;
+        void reset();
+
     private:
+        using Clock = std::chrono::high_resolution_clock;
+        using TimePoint = std::chrono::time_point<Clock>;
+
+        struct LapEntry {
+            std::string label;
+            TimePoint time;
+        };
+
         std::string m_name;
-
-        std::chrono::high_resolution_clock::time_point m_start;
-        std::chrono::high_resolution_clock::time_point m_end;
-
         bool m_running;
+
+        TimePoint m_start;
+        TimePoint m_end;
+
+        std::vector<LapEntry> m_laps;
     };
 
 }

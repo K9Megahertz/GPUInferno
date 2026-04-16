@@ -19,6 +19,11 @@
 #include "core/cpuops.h"
 #include "core/dtype_dispatch.h"
 
+int g_mmcountfast = 0;
+int g_mmcountslow = 0;
+
+std::unordered_map<std::string, size_t> g_matmul_counts;
+
 namespace Inferno {
 
 
@@ -429,7 +434,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Tensor matmul(const Tensor& A, const Tensor& B) {
+	Tensor matmul(const Tensor& A, const Tensor& B, std::string label) {
 
 
 		bool a_vec = (A.ndim() == 1);
@@ -449,7 +454,7 @@ namespace Inferno {
 			B2.strides() = B2.calculate_strides(B2.shape());
 		}
 
-		Tensor out = matmul_impl(A2, B2);
+		Tensor out = matmul_impl(A2, B2, label);
 
 		if (a_vec && b_vec)
 			out.shape()={1};   // scalar	
@@ -484,7 +489,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Tensor matmul_impl(const Tensor& A, const Tensor& B) {
+	Tensor matmul_impl(const Tensor& A, const Tensor& B, std::string label) {
 
 		return dispatchAnyTwo(A.dtype(), B.dtype(), [&](auto TA, auto TB) {
 			using AT = typename decltype(TA)::type;
@@ -575,23 +580,153 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal matmul path");
-				cpu_matmul<AT,BT,RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
+				cpu_matmul<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
 				break;
 
 				////////////////////////////////////////////////////
 				// CUDA Code Path
 				////////////////////////////////////////////////////
-			case DeviceType::CUDA:
+			/*case DeviceType::CUDA:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal matmul path");
-				if (A.is_contiguous() && B.is_contiguous())
-					cuda_matmul_fast<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
-				else 
-					cuda_matmul<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
+				if (A.is_contiguous() && B.is_contiguous()) {
+
+					if constexpr (
+						std::is_same_v<AT, float> && std::is_same_v<BT, float> && std::is_same_v<RT, float>) {
+						g_mmcountfast++;
+						cublas_mm<AT, BT, RT>(aptr, bptr, optr, a_rows, a_cols, b_cols);
+					}
+					else if constexpr (std::is_same_v<AT, double> && std::is_same_v<BT, double> && std::is_same_v<RT, double>) {
+						g_mmcountfast++;
+						cublas_mm<AT, BT, RT>(aptr, bptr, optr, a_rows, a_cols, b_cols);
+					}
+					else {
+						g_mmcountslow++;
+						cuda_matmul<AT, BT, RT>(
+							aptr, bptr, optr,
+							a_padded_shape, a_padded_strides,
+							b_padded_shape, b_padded_strides,
+							out_shape
+						);
+					}
+				}
+				else {
+					g_mmcountslow++;
+					cuda_matmul<AT, BT, RT>(
+						aptr, bptr, optr,
+						a_padded_shape, a_padded_strides,
+						b_padded_shape, b_padded_strides,
+						out_shape
+					);
+				}
 				break;
 
 			default:
 				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
 				exit(1);
+			}*/
+
+			case DeviceType::CUDA:
+
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using matmul path");
+
+				const size_t M = a_rows;
+				const size_t K = a_cols;
+				const size_t N = b_cols;
+
+				const std::vector<size_t> out_batch_shape(out_shape.begin(), out_shape.end() - 2);
+				const size_t batch_count_sz = product(out_batch_shape);
+				const bool is_batched = batch_count_sz > 1;
+
+				if constexpr (cublas_supported_v<AT, BT, RT>) {
+
+					// Plain 2D fast path
+					if (!is_batched && A.is_contiguous() && B.is_contiguous()) {
+						g_mmcountfast++;
+						g_matmul_counts[label]++;
+						cublas_mm_row_major<AT, BT, RT>(aptr, bptr, optr, M, K, N);
+					}
+
+					// Batched fast path
+					else if (A.is_contiguous() &&
+						B.is_contiguous() &&
+						can_use_strided_batched_fastpath(a_batch_shape, b_batch_shape, out_batch_shape))
+					{
+						long long strideA = 0;
+						long long strideB = 0;
+						long long strideC = static_cast<long long>(M * N);
+
+						if (a_batch_shape == out_batch_shape) {
+							strideA = static_cast<long long>(M * K);
+						}
+						else if (all_ones(a_batch_shape)) {
+							strideA = 0;
+						}
+						else {
+							strideA = -1;
+						}
+
+						if (b_batch_shape == out_batch_shape) {
+							strideB = static_cast<long long>(K * N);
+						}
+						else if (all_ones(b_batch_shape)) {
+							strideB = 0;
+						}
+						else {
+							strideB = -1;
+						}
+
+						if (strideA >= 0 && strideB >= 0) {
+							g_mmcountfast++;
+							g_matmul_counts[label]++;
+							cublas_mm_strided_batched_row_major<AT, BT, RT>(
+								aptr,
+								bptr,
+								optr,
+								M,
+								K,
+								N,
+								strideA,
+								strideB,
+								strideC,
+								static_cast<int>(batch_count_sz)
+							);
+						}
+						else {
+							g_mmcountslow++;
+							g_matmul_counts[label]++;
+							cuda_matmul<AT, BT, RT>(
+								aptr, bptr, optr,
+								a_padded_shape, a_padded_strides,
+								b_padded_shape, b_padded_strides,
+								out_shape
+							);
+						}
+					}
+
+					// Fallback
+					else {
+						g_mmcountslow++;
+						g_matmul_counts[label]++;
+						cuda_matmul<AT, BT, RT>(
+							aptr, bptr, optr,
+							a_padded_shape, a_padded_strides,
+							b_padded_shape, b_padded_strides,
+							out_shape
+						);
+					}
+				}
+				else {
+					g_mmcountslow++;
+					g_matmul_counts[label]++;
+					cuda_matmul<AT, BT, RT>(
+						aptr, bptr, optr,
+						a_padded_shape, a_padded_strides,
+						b_padded_shape, b_padded_strides,
+						out_shape
+					);
+				}
+
+				break;
 			}
 
 			return out;
@@ -700,12 +835,7 @@ namespace Inferno {
 		impl->dtype() = base_impl->dtype();
 		impl->device() = base_impl->device();
 		impl->set_is_view(true);
-
-		/*if (base_impl->is_view()) 
-			impl->set_base(base_impl->get_base());
-		else
-			impl->set_base(GetImpl(base));*/
-		
+	
 		impl->name() = name;		
 		impl->id() = Inferno::IDBroker::GenID();			
 		impl->set_requires_grad(base_impl->requires_grad());
@@ -1129,7 +1259,7 @@ namespace Inferno {
 					// CPU Code Path
 					////////////////////////////////////////////////////
 				case DeviceType::CPU:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal matmul path");
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal masked fill path");
 					cpu_masked_fill<AT, MT>(
 						iptr,mptr,optr,
 						input.shape(),input.strides(),input.offset(),
@@ -1142,11 +1272,11 @@ namespace Inferno {
 					////////////////////////////////////////////////////
 					// CUDA Code Path
 					////////////////////////////////////////////////////
-				case DeviceType::CUDA:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal matmul path");					
-					cuda_masked_fill<AT, MT>(iptr,mptr,optr,input.shape(),input.strides(),input.offset(),mask.shape(),mask.strides(),mask.offset(),out.numel(),static_cast<AT>(value));
+				case DeviceType::CUDA: {
+					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal masked fill path");					
+					cuda_masked_fill<AT, MT>(iptr, mptr, optr, input.shape(), input.strides(), input.offset(), mask.shape(), mask.strides(), mask.offset(), out.numel(), static_cast<AT>(value));
 					break;
-
+				}
 				default:
 					Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
 					exit(1);

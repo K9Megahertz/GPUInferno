@@ -204,7 +204,7 @@ namespace Inferno {
             );
 
         check_cuda(cudaGetLastError(), "cuda_matmul kernel launch failed");
-        check_cuda(cudaDeviceSynchronize(), "cuda_matmul kernel execution failed");
+        //check_cuda(cudaDeviceSynchronize(), "cuda_matmul kernel execution failed");
 
         //if (batch_rank > 0) {
             check_cuda(cudaFree(d_out_batch_shape), "cuda_matmul cudaFree d_out_batch_shape failed");
@@ -612,7 +612,7 @@ namespace Inferno {
             );
 
         check_cuda(cudaGetLastError(), "cuda_matmul_fast kernel launch failed");
-        check_cuda(cudaDeviceSynchronize(), "cuda_matmul_fast kernel execution failed");
+        //check_cuda(cudaDeviceSynchronize(), "cuda_matmul_fast kernel execution failed");
 
         check_cuda(cudaFree(d_out_batch_shape), "cuda_matmul_fast cudaFree d_out_batch_shape failed");
         check_cuda(cudaFree(d_a_batch_shape), "cuda_matmul_fast cudaFree d_a_batch_shape failed");
@@ -858,7 +858,7 @@ namespace Inferno {
             );
 
         check_cuda(cudaGetLastError(), "cuda_matmul_fast kernel launch failed");
-        check_cuda(cudaDeviceSynchronize(), "cuda_matmul_fast kernel execution failed");
+        ///check_cuda(cudaDeviceSynchronize(), "cuda_matmul_fast kernel execution failed");
     }
 
 
@@ -960,6 +960,254 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&);
 
+
+
+    template <typename AT, typename BT, typename RT>
+    void cublas_mm(const AT* aptr, const BT* bptr, RT* optr,
+        size_t M, size_t K, size_t N)
+    {
+        cublasHandle_t handle;
+        check_cublas(cublasCreate(&handle), "Error: Could not create cublas handle");
+
+        if constexpr (std::is_same_v<AT, float> &&
+            std::is_same_v<BT, float> &&
+            std::is_same_v<RT, float>) {
+            const float alpha = 1.0f;
+            const float beta = 0.0f;
+
+            check_cublas(
+                cublasSgemm(
+                    handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    static_cast<int>(N),   // row-major trick
+                    static_cast<int>(M),
+                    static_cast<int>(K),
+                    &alpha,
+                    bptr, static_cast<int>(N),
+                    aptr, static_cast<int>(K),
+                    &beta,
+                    optr, static_cast<int>(N)
+                ),
+                "cublasSgemm failed"
+            );
+        }
+        else if constexpr (std::is_same_v<AT, double> &&
+            std::is_same_v<BT, double> &&
+            std::is_same_v<RT, double>) {
+            const double alpha = 1.0;
+            const double beta = 0.0;
+
+            check_cublas(
+                cublasDgemm(
+                    handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    static_cast<int>(N),
+                    static_cast<int>(M),
+                    static_cast<int>(K),
+                    &alpha,
+                    bptr, static_cast<int>(N),
+                    aptr, static_cast<int>(K),
+                    &beta,
+                    optr, static_cast<int>(N)
+                ),
+                "cublasDgemm failed"
+            );
+        }
+
+        check_cublas(cublasDestroy(handle), "Error: Failed to destroy handle");
+    }
+
+
+    //template void cublas_mm<int, int, int>(const int*, const int*, int*, size_t, size_t, size_t);
+    //template void cublas_mm<int, float, float>(const int*, const float*, float*, size_t, size_t, size_t);
+    //template void cublas_mm<int, double, double>(const int*, const double*, double*, size_t, size_t, size_t);
+
+    //template void cublas_mm<float, int, float>(const float*, const int*, float*, size_t, size_t, size_t);
+    template void cublas_mm<float, float, float>(const float*, const float*, float*, size_t, size_t, size_t);
+    template void cublas_mm<float, double, double>(const float*, const double*, double*, size_t, size_t, size_t);
+
+    //template void cublas_mm<double, int, double>(const double*, const int*, double*, size_t, size_t, size_t);
+    template void cublas_mm<double, float, double>(const double*, const float*, double*, size_t, size_t, size_t);
+    template void cublas_mm<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t);
+
+
+    cublasHandle_t get_cublas_handle() {
+        static cublasHandle_t handle = [] {
+            cublasHandle_t h;
+            check_cublas(cublasCreate(&h), "Error: Could not create cublas handle");
+            return h;
+        }();
+        return handle;
+    }
+
+    size_t product(const std::vector<size_t>& v) {
+        size_t out = 1;
+        for (size_t x : v) out *= x;
+        return out;
+    }
+
+    bool all_ones(const std::vector<size_t>& v) {
+        for (size_t x : v) {
+            if (x != 1) return false;
+        }
+        return true;
+    }
+
+
+
+    template <typename AT, typename BT, typename RT>
+    void cublas_mm_row_major(const AT* aptr, const BT* bptr, RT* optr,
+        size_t M, size_t K, size_t N)
+    {
+        auto handle = get_cublas_handle();
+
+        if constexpr (std::is_same_v<AT, float> &&
+            std::is_same_v<BT, float> &&
+            std::is_same_v<RT, float>)
+        {
+            const float alpha = 1.0f;
+            const float beta = 0.0f;
+
+            check_cublas(
+                cublasSgemm(
+                    handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    static_cast<int>(N),   // swapped for row-major
+                    static_cast<int>(M),
+                    static_cast<int>(K),
+                    &alpha,
+                    bptr, static_cast<int>(N),
+                    aptr, static_cast<int>(K),
+                    &beta,
+                    optr, static_cast<int>(N)
+                ),
+                "cublasSgemm failed"
+            );
+        }
+        else if constexpr (std::is_same_v<AT, double> &&
+            std::is_same_v<BT, double> &&
+            std::is_same_v<RT, double>)
+        {
+            const double alpha = 1.0;
+            const double beta = 0.0;
+
+            check_cublas(
+                cublasDgemm(
+                    handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    static_cast<int>(N),   // swapped for row-major
+                    static_cast<int>(M),
+                    static_cast<int>(K),
+                    &alpha,
+                    bptr, static_cast<int>(N),
+                    aptr, static_cast<int>(K),
+                    &beta,
+                    optr, static_cast<int>(N)
+                ),
+                "cublasDgemm failed"
+            );
+        }
+
+        //check_cuda(cudaDeviceSynchronize(), "cublas_mm_row_major sync failed");
+    }
+
+    template <typename AT, typename BT, typename RT>
+    void cublas_mm_strided_batched_row_major(
+        const AT* aptr,
+        const BT* bptr,
+        RT* optr,
+        size_t M,
+        size_t K,
+        size_t N,
+        long long strideA,
+        long long strideB,
+        long long strideC,
+        int batch_count)
+    {
+        auto handle = get_cublas_handle();
+
+        if constexpr (std::is_same_v<AT, float> &&
+            std::is_same_v<BT, float> &&
+            std::is_same_v<RT, float>)
+        {
+            const float alpha = 1.0f;
+            const float beta = 0.0f;
+
+            check_cublas(
+                cublasSgemmStridedBatched(
+                    handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    static_cast<int>(N),   // swapped for row-major
+                    static_cast<int>(M),
+                    static_cast<int>(K),
+                    &alpha,
+                    bptr, static_cast<int>(N), strideB,
+                    aptr, static_cast<int>(K), strideA,
+                    &beta,
+                    optr, static_cast<int>(N), strideC,
+                    batch_count
+                ),
+                "cublasSgemmStridedBatched failed"
+            );
+        }
+        else if constexpr (std::is_same_v<AT, double> &&
+            std::is_same_v<BT, double> &&
+            std::is_same_v<RT, double>)
+        {
+            const double alpha = 1.0;
+            const double beta = 0.0;
+
+            check_cublas(
+                cublasDgemmStridedBatched(
+                    handle,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    static_cast<int>(N),   // swapped for row-major
+                    static_cast<int>(M),
+                    static_cast<int>(K),
+                    &alpha,
+                    bptr, static_cast<int>(N), strideB,
+                    aptr, static_cast<int>(K), strideA,
+                    &beta,
+                    optr, static_cast<int>(N), strideC,
+                    batch_count
+                ),
+                "cublasDgemmStridedBatched failed"
+            );
+        }
+
+        //check_cuda(cudaDeviceSynchronize(), "cublas_mm_strided_batched_row_major sync failed");
+    }
+
+    bool can_use_strided_batched_fastpath(
+        const std::vector<size_t>& a_batch_shape,
+        const std::vector<size_t>& b_batch_shape,
+        const std::vector<size_t>& out_batch_shape)
+    {
+        // Exact same batch shape: perfect fit for strided batched GEMM.
+        if (a_batch_shape == b_batch_shape && a_batch_shape == out_batch_shape) {
+            return true;
+        }
+
+        // One side is a single matrix reused across all batches.
+        if (all_ones(a_batch_shape) && b_batch_shape == out_batch_shape) {
+            return true;
+        }
+
+        if (all_ones(b_batch_shape) && a_batch_shape == out_batch_shape) {
+            return true;
+        }
+
+        // Mixed broadcasting like [B,1] x [1,H] is not representable
+        // with one constant stride per operand.
+        return false;
+    }
+
+
+    template void cublas_mm_strided_batched_row_major<float, float, float>(const float*, const float*, float*, size_t, size_t, size_t, long long, long long, long long, int );
+    template void cublas_mm_strided_batched_row_major<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t, long long, long long, long long, int);
+
+    template void cublas_mm_row_major<float,float,float>(const float*, const float*, float*, size_t, size_t, size_t);
+    template void cublas_mm_row_major<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t);
 }
 
 

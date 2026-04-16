@@ -160,20 +160,8 @@ namespace Inferno {
         cudaFree(d_input_strides);
         cudaFree(d_mask_shape);
         cudaFree(d_mask_strides);
+
     }
-
-
-    /*template void Inferno::cuda_masked_fill<float, bool>(
-        const float*, const bool*, float*,
-        const std::vector<size_t>&,
-        const std::vector<size_t>&,
-        size_t,
-        const std::vector<size_t>&,
-        const std::vector<size_t>&,
-        size_t,
-        size_t,
-        float
-    );*/
 
     template void Inferno::cuda_masked_fill<int, int>(
         const int*, const int*, int*,
@@ -286,4 +274,65 @@ namespace Inferno {
         float
     );
 
+
+
+
+
+    template<typename AT, typename MT>
+    __global__ void masked_fill_contiguous_kernel(
+        const AT* iptr,
+        const MT* mptr,
+        AT* optr,
+        size_t total_elements,
+        size_t input_offset,
+        size_t mask_offset,
+        size_t output_offset,
+        AT value)
+    {
+        size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+        if (idx >= total_elements)
+            return;
+
+        size_t iidx = input_offset + idx;
+        size_t midx = mask_offset + idx;
+        size_t oidx = output_offset + idx;
+
+        optr[oidx] = static_cast<bool>(mptr[midx]) ? value : iptr[iidx];
+    }
+
+
+
+    template<typename AT, typename MT>
+    void cuda_masked_fill_fast(
+        const AT* iptr,
+        const MT* mptr,
+        AT* optr,
+        size_t total_elements,
+        size_t input_offset,
+        size_t mask_offset,
+        size_t output_offset,
+        AT value)
+    {
+        constexpr int threads = 256;
+        int blocks = static_cast<int>((total_elements + threads - 1) / threads);
+
+        masked_fill_contiguous_kernel<AT, MT> << <blocks, threads >> > (
+            iptr,
+            mptr,
+            optr,
+            total_elements,
+            input_offset,
+            mask_offset,
+            output_offset,
+            value
+            );
+
+        check_cuda(cudaGetLastError(), "masked_fill_contiguous_kernel launch failed");
+    }
+
+    template void cuda_masked_fill_fast<int, int>(const int*, const int*, int*, size_t, size_t, size_t, size_t, int);
+    template void cuda_masked_fill_fast<float, int>(const float*, const int*, float*, size_t, size_t, size_t, size_t, float);
+    template void cuda_masked_fill_fast<double, int>(const double*, const int*, double*, size_t, size_t, size_t, size_t, double);
+    
+    
 } 

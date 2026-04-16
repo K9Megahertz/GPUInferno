@@ -11,7 +11,7 @@ namespace Inferno {
 	Tensor subtract(const Tensor& A, const Tensor& B);
 	Tensor multiply(const Tensor& A, const Tensor& B);
 	Tensor divide(const Tensor& A, const Tensor& B);
-	Tensor matmul(const Tensor& A, const Tensor& B);	
+	Tensor matmul(const Tensor& A, const Tensor& B, std::string label);		
 	Tensor concat(const std::vector<Tensor>& tensors, int axis = 0);
 	Tensor select(const Tensor& A, int axis, size_t index);
 	Tensor triu(const Tensor& A, int diagonal);	

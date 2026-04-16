@@ -111,9 +111,7 @@ namespace Inferno {
 		void set_is_view(bool flag);
 		void set_requires_grad(bool flag);		
 		bool is_view();
-		//void set_base(const std::shared_ptr<TensorImpl>& base);
-		//std::shared_ptr<TensorImpl> get_base();
-
+	
 		bool is_contiguous() const;
 
 	private:
@@ -132,8 +130,7 @@ namespace Inferno {
 		size_t m_gradcount;
 		DType m_dtype;
 		bool m_requires_grad;
-		bool m_isview;
-		//std::shared_ptr<TensorImpl>  m_base;
+		bool m_isview;		
 		int m_id;
 
 	};

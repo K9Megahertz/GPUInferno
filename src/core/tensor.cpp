@@ -497,7 +497,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Tensor Tensor::broadcast_to(std::vector<size_t> desiredshape) {
+	/*Tensor Tensor::broadcast_to(std::vector<size_t> desiredshape) {
 		//TODO: just return this if its the same
 		if (shape().size() == desiredshape.size()) {
 			bool sameflag = true;
@@ -512,8 +512,68 @@ namespace Inferno {
 		//	return *this;
 		return *this;
 		//return broadcast_to_impl(*this, desiredshape);
-	}
+	}*/
 
+	Tensor Tensor::broadcast_to(std::vector<size_t> desiredshape)
+	{
+		// If already same shape, no work needed
+		if (shape() == desiredshape) {
+			return *this;
+		}
+
+		const std::vector<size_t>& oldshape = shape();
+		const std::vector<size_t>& oldstrides = strides();
+
+		const size_t old_rank = oldshape.size();
+		const size_t new_rank = desiredshape.size();
+
+		// Cannot broadcast to fewer dimensions
+		if (new_rank < old_rank) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
+				"broadcast_to: cannot broadcast to fewer dimensions");
+			exit(1);
+		}
+
+		std::vector<size_t> newstrides(new_rank, 0);
+
+		// Align old dims to the right, like NumPy / PyTorch
+		// Example:
+		// oldshape    = [1, 1, T, T]
+		// desiredshape= [B, H, T, T]
+		// offset = 2 extra leading dims in desiredshape
+		size_t dim_offset = new_rank - old_rank;
+
+		for (size_t new_dim = 0; new_dim < new_rank; ++new_dim) {
+
+			// Leading dimensions that don't exist in old tensor are broadcast dims
+			if (new_dim < dim_offset) {
+				newstrides[new_dim] = 0;
+				continue;
+			}
+
+			size_t old_dim = new_dim - dim_offset;
+
+			size_t old_size = oldshape[old_dim];
+			size_t new_size = desiredshape[new_dim];
+
+			if (old_size == new_size) {
+				// Normal dimension, preserve stride
+				newstrides[new_dim] = oldstrides[old_dim];
+			}
+			else if (old_size == 1) {
+				// Broadcasted dimension -> stride 0
+				newstrides[new_dim] = 0;
+			}
+			else {
+				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
+					"broadcast_to: shape is not broadcastable to desired shape");
+				exit(1);
+			}
+		}
+
+		// Return a view with same storage and offset, but new shape/strides
+		return make_view(*this, desiredshape, newstrides, offset(), name() + "_broadcast");
+	}
 
 
 

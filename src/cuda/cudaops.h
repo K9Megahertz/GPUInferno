@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <device_launch_parameters.h>
 #include <util/logger.h>
-
+#include <cublas_v2.h>
 	
 
 namespace Inferno {
@@ -167,12 +167,28 @@ namespace Inferno {
 		size_t total_elements,
 		AT value);
 
+	template<typename AT, typename MT>
+	void cuda_masked_fill_fast(
+		const AT* iptr,
+		const MT* mptr,
+		AT* optr,
+		size_t total_elements,
+		size_t input_offset,
+		size_t mask_offset,
+		size_t output_offset,
+		AT value);
+
 	template <typename LT>
 	void cuda_cross_entropy_loss(const LT* logits, const int* targets, LT* out, size_t rows, size_t vocab_size);
 	
 
 	template <typename LT>
 	void cuda_cross_entropy_loss_backward(const LT* logits, const int* targets, const LT* upstream, LT* grad_logits, size_t rows, size_t vocab_size);
+
+	template <typename AT, typename BT, typename RT>
+	void cublas_mm(const AT* aptr, const BT* bptr, RT* optr, size_t M, size_t N, size_t K);
+
+	
 
 
 	inline void check_cuda(cudaError_t err, const char* msg) {
@@ -182,7 +198,37 @@ namespace Inferno {
 		}
 	}
 
+	inline void check_cublas(cublasStatus_t status, const char* msg) {
+		if (status != CUBLAS_STATUS_SUCCESS) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string(msg) + ": " + std::to_string(static_cast<int>(status)));
+			exit(1);
+		}
+	}
 
+	 size_t product(const std::vector<size_t>& v);
+	 bool all_ones(const std::vector<size_t>& v);
 
+	template <typename AT, typename BT, typename RT>
+	inline constexpr bool cublas_supported_v =
+		(std::is_same_v<AT, float> && std::is_same_v<BT, float> && std::is_same_v<RT, float>) ||
+		(std::is_same_v<AT, double> && std::is_same_v<BT, double> && std::is_same_v<RT, double>);
+
+	template <typename AT, typename BT, typename RT>
+	void cublas_mm_row_major(const AT* aptr, const BT* bptr, RT* optr, size_t M, size_t K, size_t N);
+
+	template <typename AT, typename BT, typename RT>
+	void cublas_mm_strided_batched_row_major(
+		const AT* aptr,
+		const BT* bptr,
+		RT* optr,
+		size_t M,
+		size_t K,
+		size_t N,
+		long long strideA,
+		long long strideB,
+		long long strideC,
+		int batch_count);
+
+	 bool can_use_strided_batched_fastpath(const std::vector<size_t>& a_batch_shape,const std::vector<size_t>& b_batch_shape,const std::vector<size_t>& out_batch_shape);
 
 }
