@@ -2,7 +2,7 @@
 #include <inferno/inferno.h>
 #include "logger.h"
 #include "timer.h"
-
+#include "tokenizer.h"
 
 Inferno::Timer t1("matmul");
 
@@ -47,7 +47,7 @@ public:
 		pe = Inferno::Tensor(Inferno::DType::Float32, std::move(pe_data), { context_size, embed_dim }, "positional-encoding");
 
 		Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Positional Encoding - Register Buffer" << std::endl;
-		register_buffer(pe);
+		register_buffer("pe",&pe);
 
 	}
 
@@ -74,7 +74,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-class MultiHeadAttention : public Inferno::Module {
+/*class MultiHeadAttention : public Inferno::Module {
 public:
 	MultiHeadAttention(size_t embed_dim, size_t num_heads) :
 		m_embed_dim(embed_dim),
@@ -156,7 +156,7 @@ private:
 	std::vector<Inferno::Linear> Wk_layers;
 	std::vector<Inferno::Linear> Wv_layers;
 	Inferno::Linear W_out;
-};
+};*/
 
 
 
@@ -182,8 +182,8 @@ public:
 		Wqkv_layer(embed_dim, embed_dim * 3)
 	{
 
-		register_module(&Wqkv_layer);		
-		register_module(&W_out); // final output projection after concatenation		
+		register_module("Wqkv", &Wqkv_layer);
+		register_module("W_out", &W_out); // final output projection after concatenation		
 
 	}
 
@@ -399,8 +399,8 @@ public:
 			exit(1);
 		}
 
-		register_module(&Wqkv_layer);
-		register_module(&W_out);
+		register_module("Wqkv", &Wqkv_layer);
+		register_module("W_out", &W_out);
 	}
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
@@ -544,8 +544,8 @@ public:
 			exit(1);
 		}
 
-		register_module(&Wqkv_layer);
-		register_module(&W_out);
+		register_module("Wqkv", &Wqkv_layer);
+		register_module("W_out", &W_out);
 	}
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
@@ -684,8 +684,8 @@ public:
 			exit(1);
 		}
 
-		register_module(&Wqkv_layer);
-		register_module(&W_out);
+		register_module("Wqkv", &Wqkv_layer);
+		register_module("W_out", &W_out);
 	}
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
@@ -833,11 +833,11 @@ public:
 		feedforward1(embed_dim, 4 * embed_dim),
 		feedforward2(4 * embed_dim, embed_dim)
 	{
-		register_module(&attn);
-		register_module(&layernorm1);
-		register_module(&layernorm2);
-		register_module(&feedforward1);
-		register_module(&feedforward2);
+		register_module("attn", &attn);
+		register_module("ln1", &layernorm1);
+		register_module("ln2", &layernorm2);
+		register_module("ff1", &feedforward1);
+		register_module("ff2", &feedforward2);
 	}
 
 	Inferno::Tensor forward(Inferno::Tensor& x) override {
@@ -946,17 +946,17 @@ public:
 		m_vocab_size = vocab_size;
 
 		//TODO: add these to the constructors?
-		this->register_module(&emb1);
-		this->register_module(&pos_enc);
+		this->register_module("tok_embedding", &emb1);
+		this->register_module("pos_encoding", &pos_enc);
 
 		transblks.reserve(nblocks);
 		for (size_t i = 0; i < nblocks; i++) {
 			transblks.emplace_back(embed_dim, nheads);  // constructs Head(i)
-			this->register_module(&transblks[i]);
+			this->register_module("block" + std::to_string(i), & transblks[i]);
 		}
 
-		this->register_module(&linear1);
-		this->register_module(&layernorm1);
+		this->register_module("linear1", &linear1);
+		this->register_module("ln1", &layernorm1);
 
 
 	}
@@ -1085,7 +1085,7 @@ int main() {
 	size_t numheads = 12;
 	size_t numblocks = 12;
 
-
+	 
 	size_t batch_size = 8;
 
 
@@ -1105,9 +1105,30 @@ int main() {
 	//Inferno::Tensor target = Inferno::Tensor(Inferno::DType::Float32, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 10 }, "target", device);
 
 
+	std::ifstream file("trainingtest.txt", std::ios::binary);
+
+	if (!file) {
+		throw std::runtime_error("Failed to open file: ");
+	}
+	unsigned long filesize = (unsigned long)file.tellg();
+	Tokenizer tok(file,filesize);
+
+	Token *t = tok.get_next_token();
 
 	
 	GPTModel model(vocabulary_size, context_size, embedding_dim, numheads, numblocks);
+
+	Inferno::StateDict sd  = model.state_dict();
+	
+
+	for (const auto& [name, tensor] : sd) {
+		std::cout << name << std::endl;
+
+	}
+
+	Inferno::Checkpoint chkpt;
+	chkpt.set_state_dict(sd);
+	chkpt.save("myfirstcheckpoint");
 
 	
 

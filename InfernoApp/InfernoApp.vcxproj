@@ -140,6 +140,8 @@
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="timer.cpp" />
+    <ClCompile Include="token.cpp" />
+    <ClCompile Include="tokenizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Inferno\Inferno.vcxproj">
@@ -149,6 +151,8 @@
   <ItemGroup>
     <ClInclude Include="logger.h" />
     <ClInclude Include="timer.h" />
+    <ClInclude Include="token.h" />
+    <ClInclude Include="tokenizer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

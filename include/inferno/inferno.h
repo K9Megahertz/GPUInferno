@@ -15,6 +15,8 @@
 
 #include <inferno/optim/optimizers.h>
 
+#include <inferno/checkpoint/checkpoint.h>
+
 #include <inferno/util/random.h>
 
  
