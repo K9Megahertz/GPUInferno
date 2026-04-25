@@ -12,6 +12,7 @@ x86/
 out/
 build/
 logs/
+data/
 
 # CMake
 CMakeFiles/

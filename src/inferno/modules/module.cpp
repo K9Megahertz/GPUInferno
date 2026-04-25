@@ -1,5 +1,5 @@
 #include <inferno/modules/module.h>
-#include "util/logger.h"
+#include "inferno/util/logger.h"
 
 namespace Inferno {
 
