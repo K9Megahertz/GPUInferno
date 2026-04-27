@@ -186,7 +186,7 @@
     <ClCompile Include="..\src\inferno\modules\module.cpp">
       <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\inferno\optim\optimizers.cpp">
+    <ClCompile Include="..\src\inferno\optim\sgd.cpp">
       <Filter>Source Files\optim</Filter>
     </ClCompile>
     <ClCompile Include="..\src\inferno\storage\cpustorage.cpp">
@@ -207,6 +207,9 @@
     <ClCompile Include="..\src\inferno\util\random.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\inferno\optim\adamw.cpp">
+      <Filter>Source Files\optim</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\inferno\core\tensor.h">
@@ -224,7 +227,7 @@
     <ClInclude Include="..\include\inferno\core\ops.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\inferno\optim\optimizers.h">
+    <ClInclude Include="..\include\inferno\optim\sgd.h">
       <Filter>Header Files\optim</Filter>
     </ClInclude>
     <ClInclude Include="..\include\inferno\util\random.h">
@@ -380,6 +383,9 @@
     <ClInclude Include="..\src\inferno\util\nodetracker.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\inferno\optim\adamw.h">
+      <Filter>Header Files\optim</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\inferno\cuda\cudaadd.cu">
@@ -449,6 +455,9 @@
       <Filter>Source Files\cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\inferno\cuda\cudatri.cu">
+      <Filter>Source Files\cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\inferno\cuda\cudaadamwstep.cu">
       <Filter>Source Files\cuda</Filter>
     </CudaCompile>
   </ItemGroup>

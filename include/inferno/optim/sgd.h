@@ -53,7 +53,7 @@ namespace Inferno {
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         template <typename AT, typename BT>
-        void cpu_step_impl(AT* dptr, BT* gptr, size_t N) {
+        void cpu_sgd_step_impl(AT* dptr, BT* gptr, size_t N) {
             for (size_t i = 0; i < N; i++) {
                 dptr[i] = static_cast<AT>(static_cast<double>(dptr[i]) - static_cast<double>(m_lr) * static_cast<double>(gptr[i]));
             }

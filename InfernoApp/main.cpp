@@ -1139,7 +1139,8 @@ int main() {
 	Inferno::CrossEntropyLoss loss_fn;
 
 	auto params = model.parameters();
-	Inferno::OptimizerSGD optimizer(params, 0.001f);
+	//Inferno::OptimizerSGD optimizer(params, 0.01f);
+	Inferno::OptimizerAdamW optimizer(params);
 
 	
 

@@ -13,7 +13,8 @@
 #include <inferno/loss/loss.h>
 #include <inferno/loss/crossentropyloss.h>
 
-#include <inferno/optim/optimizers.h>
+#include <inferno/optim/sgd.h>
+#include <inferno/optim/adamw.h>
 
 #include <inferno/checkpoint/checkpoint.h>
 

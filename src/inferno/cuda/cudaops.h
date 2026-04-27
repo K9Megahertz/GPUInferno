@@ -55,7 +55,11 @@ namespace Inferno {
 	void cuda_sigmoid_backward(const AT* yptr, const GT* gptr, RT* outptr, size_t n);
 
 	template <typename AT, typename BT>
-	void cuda_step_impl(AT* dptr, const BT* gptr, size_t N, float lr);
+	void cuda_sgd_step_impl(AT* dptr, const BT* gptr, size_t N, float lr);
+
+	template <typename AT, typename BT>
+	void cuda_adamw_step_impl(AT* p, const BT* g, AT* m, AT* v, size_t count,
+		float lr, float beta1, float beta2, float eps, float weight_decay, float bias_correction1, float bias_correction2);
 
 	template <typename AT, typename BT>
 	void cuda_embedding(const BT* tptr, const AT* eptr, AT* optr, size_t num_batches, size_t seq_len, size_t embed_dim);

@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <inferno/optim/optimizers.h>
+#include <inferno/optim/sgd.h>
 #include <inferno/core/tensor.h>
 #include "inferno/cuda/cudaops.h"
 #include "inferno/core/tensorimpl.h"
@@ -74,7 +74,7 @@ namespace Inferno {
                     ////////////////////////////////////////////////////
                 case DeviceType::CPU:
                     Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal step path");
-                    cpu_step_impl<AT,BT>(dptr, gptr, count);
+                    cpu_sgd_step_impl<AT,BT>(dptr, gptr, count);
                     break;
 
                     ////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ namespace Inferno {
                     ////////////////////////////////////////////////////
                 case DeviceType::CUDA:
                     Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal step path");
-                    cuda_step_impl<AT, BT>(dptr, gptr, count, m_lr);
+                    cuda_sgd_step_impl<AT, BT>(dptr, gptr, count, m_lr);
                     break;
 
                 default:
@@ -108,7 +108,9 @@ namespace Inferno {
 
     void OptimizerSGD::zero_grad() {
         for (auto& p : m_params) {
-            p->grad() = nullptr;
+            if (p != nullptr) {
+                p->grad() = nullptr;
+            }
         }
     }   
 

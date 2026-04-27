@@ -54,7 +54,8 @@
     <ClCompile Include="..\src\inferno\modules\layernorm.cpp" />
     <ClCompile Include="..\src\inferno\modules\linear.cpp" />
     <ClCompile Include="..\src\inferno\modules\module.cpp" />
-    <ClCompile Include="..\src\inferno\optim\optimizers.cpp" />
+    <ClCompile Include="..\src\inferno\optim\adamw.cpp" />
+    <ClCompile Include="..\src\inferno\optim\sgd.cpp" />
     <ClCompile Include="..\src\inferno\storage\cpustorage.cpp" />
     <ClCompile Include="..\src\inferno\storage\cudastorage.cpp" />
     <ClCompile Include="..\src\inferno\util\idbroker.cpp" />
@@ -76,7 +77,8 @@
     <ClInclude Include="..\include\inferno\modules\embedding.h" />
     <ClInclude Include="..\include\inferno\modules\layernorm.h" />
     <ClInclude Include="..\include\inferno\modules\linear.h" />
-    <ClInclude Include="..\include\inferno\optim\optimizers.h" />
+    <ClInclude Include="..\include\inferno\optim\adamw.h" />
+    <ClInclude Include="..\include\inferno\optim\sgd.h" />
     <ClInclude Include="..\include\inferno\util\random.h" />
     <ClInclude Include="..\src\inferno\core\broadcastops.h" />
     <ClInclude Include="..\src\inferno\core\cpuops.h" />
@@ -122,6 +124,7 @@
     <ClInclude Include="..\src\inferno\util\nodetracker.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="..\src\inferno\cuda\cudaadamwstep.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudaadd.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudaconcat.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudacontiguous.cu" />

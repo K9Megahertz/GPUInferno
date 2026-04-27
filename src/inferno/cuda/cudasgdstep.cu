@@ -39,7 +39,7 @@ namespace  Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     template <typename AT, typename BT>
-    void cuda_step_impl(AT* dptr, const BT* gptr, size_t N, float lr)
+    void cuda_sgd_step_impl(AT* dptr, const BT* gptr, size_t N, float lr)
     {
     
         constexpr int threads = 256;
@@ -77,12 +77,12 @@ namespace  Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       
     
-    template void cuda_step_impl<float, float>(float*, const float*, size_t, float);
-    template void cuda_step_impl<float, double>(float*, const double*,size_t, float);
+    template void cuda_sgd_step_impl<float, float>(float*, const float*, size_t, float);
+    template void cuda_sgd_step_impl<float, double>(float*, const double*,size_t, float);
 
     
-    template void cuda_step_impl<double, float>(double*, const float*, size_t, float);
-    template void cuda_step_impl<double, double>(double*, const double*, size_t, float);
+    template void cuda_sgd_step_impl<double, float>(double*, const float*, size_t, float);
+    template void cuda_sgd_step_impl<double, double>(double*, const double*, size_t, float);
 
 
 
