@@ -1036,7 +1036,29 @@ public:
 
 
 
-int main() {
+int main(int argc, char* argv[]) {
+
+
+	bool resume = false;
+	std::string ckpt_path;
+
+	for (int i = 1; i < argc; i++) {
+		std::string arg = argv[i];
+
+		if (arg == "--resume" && i + 1 < argc) {
+			resume = true;
+			ckpt_path = argv[++i];
+		}
+	}
+
+
+
+
+
+
+
+
+	
 
 	
 
@@ -1055,11 +1077,7 @@ int main() {
 
 
 
-	InfernoTokenizer::BPETokenizer tok;
-	tok.Initialize({ "data/shakemerges.txt", "data/shakevocab.txt" });
-
-
-	DataLoader loader("data/shake.tokens",8,1024);
+	
 	
 
 	
@@ -1091,14 +1109,24 @@ int main() {
 
 
 	//GPT 2
-	size_t vocabulary_size = 22197;
+	size_t vocabulary_size = 60000;
 	size_t context_size = 1024;
 	size_t embedding_dim = 768;
 	size_t numheads = 12;
 	size_t numblocks = 12;
 
-	 
+
 	size_t batch_size = 8;
+	size_t steps_per_chunk = 8192;
+
+	InfernoTokenizer::BPETokenizer tok;
+	tok.Initialize({ "data\\openwebtextmerges.txt", "data\\openwebtextvocab.txt" });
+
+
+	DataLoader loader("data\\openwebtext_clean.tokens", batch_size, context_size, steps_per_chunk);
+
+	 
+	
 
 
 	/*std::vector<int> data(batch_size * context_size, 0);
@@ -1116,109 +1144,117 @@ int main() {
 	//Inferno::Tensor input = Inferno::Tensor(Inferno::DType::Float32, Inferno::RandomGenerator::generateRandomFloatVector(layers[0],-0.5f,0.5f), { layers[0] }, "input", device);
 	//Inferno::Tensor target = Inferno::Tensor(Inferno::DType::Float32, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 10 }, "target", device);
 
+	int checkpoint_interval = 1024;
+	int total_steps = 1048576;
+	int step = 0;
+	float lowestloss = 99;
+
 
 	
 	GPTModel model(vocabulary_size, context_size, embedding_dim, numheads, numblocks);
 
-	Inferno::StateDict sd  = model.state_dict();
-	
-
-	/*for (const auto& [name, tensor] : sd) {
-		std::cout << name << std::endl;
-
-	}*/
-
-//	Inferno::Checkpoint chkpt;
-//	chkpt.set_state_dict(sd);
-//	chkpt.save("myfirstcheckpoint");
+	std::optional<Inferno::Checkpoint> ckpt;
 
 	
+
+	if (resume) {
+		Logg::Append(Logg::LogLevel::LOGLEVEL_INFO) << "Resuming training from: " << ckpt_path << std::endl;
+		ckpt = Inferno::Checkpoint::load(ckpt_path);
+
+		step = ckpt->meta.step;
+		total_steps = ckpt->meta.total_steps;
+
+		model.load_state_dict(ckpt->model);
+	}
 
 	model.to(device);
 
-	Inferno::CrossEntropyLoss loss_fn;
-
 	auto params = model.parameters();
-	//Inferno::OptimizerSGD optimizer(params, 0.01f);
+
 	Inferno::OptimizerAdamW optimizer(params);
 
+	if (resume) {
+		optimizer.load_state_dict(ckpt->optimizer);
+	}	
+
+
+	Inferno::CrossEntropyLoss loss_fn;
+
 	
+	for (; step < total_steps; step++) {
 
-	/*Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Tokens into model" << std::endl;
-	Logg::Append(Logg::LogLevel::LOGLEVEL_INFO) << tokens << std::endl;
-	Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << std::endl;
+		t1.start();			
 
-	Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Target" << std::endl;
-	Logg::Append(Logg::LogLevel::LOGLEVEL_INFO) << target << std::endl;
-	Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << std::endl;*/
+		std::pair<Inferno::Tensor, Inferno::Tensor> pair = loader.next_batch();
 
-	int epochs = 1;
-	int loopcount = 10000;
-	for (int e = 0; e < epochs; e++) {
-		for (int i = 0; i < loopcount; i++) {
+		Inferno::Tensor x = pair.first;
+		Inferno::Tensor y = pair.second;
 
-			t1.start();			
-
-			std::pair<Inferno::Tensor, Inferno::Tensor> pair = loader.next_batch();
-
-			Inferno::Tensor x = pair.first;
-			Inferno::Tensor y = pair.second;
-
-			x = x.to(device);
-			y = y.to(device);
+		x = x.to(device);
+		y = y.to(device);
 			
-			Inferno::Tensor logits = model.forward(x);
+		Inferno::Tensor logits = model.forward(x);
 			
 
-			//for inference
-			//Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG, "next logits slice");
-			//Inferno::Tensor next_logits = x.slice(-2, m_context_size - 1, m_context_size - 1);
-			//Inferno::Tensor next_logits = Inferno::select(x, -2, m_context_size - 1); // {B,V}
-			//std::cout << next_logits << std::endl;		
+		//for inference
+		//Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG, "next logits slice");
+		//Inferno::Tensor next_logits = x.slice(-2, m_context_size - 1, m_context_size - 1);
+		//Inferno::Tensor next_logits = Inferno::select(x, -2, m_context_size - 1); // {B,V}
+		//std::cout << next_logits << std::endl;		
 
-			//std::cout << prediction << std::endl;
-			//std::cout << target << std::endl;
+		//std::cout << prediction << std::endl;
+		//std::cout << target << std::endl;
 
-			Inferno::Tensor loss = loss_fn(logits, y);
+		Inferno::Tensor loss = loss_fn(logits, y);
 
-			//std::cout << loss << std::endl;
+		//std::cout << loss << std::endl;
 
 			
-			loss.backward();
+		loss.backward();
 
 
-			optimizer.step();
-			optimizer.zero_grad();
+		optimizer.step();
+		optimizer.zero_grad();
 
 
-			t1.stop();
+		t1.stop();	
+		
+
+		Inferno::Tensor lossp = loss.to(Inferno::Device::cpu());
+		if (lossp.item<float>() < lowestloss)
+			lowestloss = lossp.item<float>();
 
 
+		Logg::Append(Logg::LogLevel::LOGLEVEL_INFO)
+			<< std::fixed	
+			<< "Iter: " << step
+			<< "  total took: "
+			<< std::setw(7) << std::setfill('0') << std::setprecision(3) << t1.elapsed_ms()
+			<< " ms  Loss: "
+			<< std::setw(13) << std::setfill('0') << std::setprecision(9) << lossp.item<float>()
+			<< " Lowest: "
+			<< std::setw(13) << std::setfill('0') << std::setprecision(9) << lowestloss
+			<< std::endl;
 
-			Inferno::Tensor lossp = loss.to(Inferno::Device::cpu());
+ 		Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Fast mm: " << g_mmcountfast << std::endl;
+		Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Slow mm: " << g_mmcountslow << std::endl;
+		/*for (const auto& [label, count] : g_matmul_counts) {
+			std::cout << label << ": " << count << std::endl;
+		}*/
+		g_matmul_counts.clear();
+		g_mmcountfast = g_mmcountslow = 0;
 
-			Logg::Append(Logg::LogLevel::LOGLEVEL_INFO)
-				<< std::fixed
-				<< "Epoch: " << e
-				<< " Iter: " << i
-				<< "  total took: "
-				<< std::setw(7) << std::setfill('0') << std::setprecision(3) << t1.elapsed_ms()
-				<< " ms  Loss: "
-				<< std::setw(13) << std::setfill('0') << std::setprecision(9) << lossp.item<float>()
-				<< std::endl;	
- 			Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Fast mm: " << g_mmcountfast << std::endl;
-			Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Slow mm: " << g_mmcountslow << std::endl;
-			/*for (const auto& [label, count] : g_matmul_counts) {
-				std::cout << label << ": " << count << std::endl;
-			}*/
-			g_matmul_counts.clear();
-			g_mmcountfast = g_mmcountslow = 0;
-
+		if (step != 0 && step % checkpoint_interval == 0) {
+			Logg::Append(Logg::LogLevel::LOGLEVEL_DEBUG) << "Writing Checkpoint" << std::endl;			
+			Inferno::Checkpoint chkpt;
+			chkpt.meta = Inferno::TrainingMetadata( step, total_steps, 0, 1);
+			chkpt.model = model.state_dict();
+			chkpt.optimizer = optimizer.state_dict();
+			chkpt.save("checkpoints\\largeckpt.bin");
 		}
-	}
-	
 
-	
+			
+	}
 
 
 	return 0;

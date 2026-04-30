@@ -154,6 +154,7 @@ namespace Inferno {
 		//functional
 		//std::vector<size_t> calculate_strides(std::vector<size_t> shape);
 		static std::vector<size_t> calculate_strides(const std::vector<size_t>& shape);
+		void copy_(const Tensor& other);
 
 
 

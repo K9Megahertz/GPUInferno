@@ -662,7 +662,7 @@ namespace Inferno {
 		if (device().is_cpu() && dst.is_cuda()) {
 			check_cuda(cudaMemcpy(dst_ptr, src_ptr, bytes, cudaMemcpyHostToDevice), "Failed to memcpy in to");
 		}
-		else if (device().is_cuda() && dst.is_cpu()) {
+		else if (device().is_cuda() && dst.is_cpu()) {			
 			check_cuda(cudaMemcpy(dst_ptr, src_ptr, bytes, cudaMemcpyDeviceToHost), "Failed to memcpy in to");
 		}
 		else if (device().is_cuda() && dst.is_cuda()) {
@@ -1227,6 +1227,54 @@ namespace Inferno {
 			});
 
 		return out;
+	}
+
+	void Tensor::copy_(const Tensor& other) {
+		if (shape() != other.shape()) {
+			throw std::runtime_error("copy_: shape mismatch");
+		}
+
+		if (dtype() != other.dtype()) {
+			throw std::runtime_error("copy_: dtype mismatch");
+		}
+
+		if (!is_contiguous() || !other.is_contiguous()) {
+			throw std::runtime_error("copy_: requires contiguous tensors");
+		}
+
+		size_t bytes = GetImpl(*this)->nbytes();
+
+		void* dst = GetImpl(*this)->raw_ptr();
+		const void* src = GetImpl(other)->raw_ptr();
+
+		DeviceType dst_device = device().m_type;
+		DeviceType src_device = other.device().m_type;
+
+		if (dst_device == DeviceType::CPU && src_device == DeviceType::CPU) {
+			std::memcpy(dst, src, bytes);
+			return;
+		}
+
+		cudaMemcpyKind kind;
+
+		if (dst_device == DeviceType::CUDA && src_device == DeviceType::CPU) {
+			kind = cudaMemcpyHostToDevice;
+		}
+		else if (dst_device == DeviceType::CPU && src_device == DeviceType::CUDA) {
+			kind = cudaMemcpyDeviceToHost;
+		}
+		else if (dst_device == DeviceType::CUDA && src_device == DeviceType::CUDA) {
+			kind = cudaMemcpyDeviceToDevice;
+		}
+		else {
+			throw std::runtime_error("copy_: unsupported device copy");
+		}
+
+		cudaError_t err = cudaMemcpy(dst, src, bytes, kind);
+
+		if (err != cudaSuccess) {
+			throw std::runtime_error(std::string("copy_: cudaMemcpy failed: ") + cudaGetErrorString(err));
+		}
 	}
 	
 }

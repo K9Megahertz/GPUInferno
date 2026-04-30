@@ -1,6 +1,7 @@
 
 #include <cstdint>
 #include <inferno/modules/module.h>
+#include <inferno/optim/adamw.h>
 
 
 namespace Inferno {
@@ -32,20 +33,18 @@ namespace Inferno {
     public:
 
         void save(const std::string& path) const;
-        Checkpoint  load(const std::string& path);
+        static Checkpoint load(const std::string& path);
 
         void set_state_dict(const StateDict& state);
         const StateDict& state_dict() const;
 
+        StateDict model;
+        AdamWStateDict optimizer;
+        TrainingMetadata meta;
 
-    private:
 
-
-        StateDict m_state_dict;
-        uint32_t m_step;
-        uint32_t m_total_steps;
-        uint32_t m_epoch;
-        uint32_t m_total_epochs;
+    private:       
+    
 
 
 

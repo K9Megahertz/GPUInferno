@@ -58,6 +58,7 @@ namespace Inferno {
 		void *raw_ptr() {
 			return m_data->raw_ptr();
 		}		
+		
 
 		template<typename T>
 		T* data_as_ptr() {
@@ -113,6 +114,8 @@ namespace Inferno {
 		bool is_view();
 	
 		bool is_contiguous() const;
+
+		
 
 	private:
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <unordered_map>
 #include <cmath>
@@ -10,10 +11,27 @@
 
 namespace Inferno {
 
+    struct AdamWParamState {
+        Tensor m;
+        Tensor v;
+    };
+
+    struct AdamWStateDict {
+        size_t step;
+
+        float lr;
+        float beta1;
+        float beta2;
+        float eps;
+        float weight_decay;
+
+        std::unordered_map<std::string, AdamWParamState> states;
+    };
+
     class OptimizerAdamW {
     public:
-        OptimizerAdamW(
-            std::vector<Tensor*> parameters,
+        OptimizerAdamW(            
+            std::vector<std::pair<std::string, Tensor*>> parameters,
             float lr = 3e-4f,
             float beta1 = 0.9f,
             float beta2 = 0.95f,
@@ -32,6 +50,8 @@ namespace Inferno {
 
         void step();
         void zero_grad();
+        void load_state_dict(const AdamWStateDict& sd);
+        AdamWStateDict state_dict() const;
 
     private:
         struct AdamWState {
@@ -41,8 +61,9 @@ namespace Inferno {
         };
 
     private:
-        std::vector<Tensor*> m_parameters;
-        std::unordered_map<Tensor*, AdamWState> m_state;
+        //std::vector<Tensor*> m_parameters;
+        std::vector<std::pair<std::string, Tensor*>> m_parameters;
+        std::unordered_map<std::string, AdamWState> m_state;
 
         float m_lr;
         float m_beta1;

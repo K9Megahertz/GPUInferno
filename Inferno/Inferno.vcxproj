@@ -77,6 +77,7 @@
     <ClInclude Include="..\include\inferno\modules\embedding.h" />
     <ClInclude Include="..\include\inferno\modules\layernorm.h" />
     <ClInclude Include="..\include\inferno\modules\linear.h" />
+    <ClInclude Include="..\include\inferno\modules\module.h" />
     <ClInclude Include="..\include\inferno\optim\adamw.h" />
     <ClInclude Include="..\include\inferno\optim\sgd.h" />
     <ClInclude Include="..\include\inferno\util\random.h" />

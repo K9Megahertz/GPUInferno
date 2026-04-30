@@ -386,6 +386,9 @@
     <ClInclude Include="..\include\inferno\optim\adamw.h">
       <Filter>Header Files\optim</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\inferno\modules\module.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\inferno\cuda\cudaadd.cu">
