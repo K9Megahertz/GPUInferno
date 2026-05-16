@@ -18,6 +18,8 @@ namespace Inferno {
             lr = m_lr * (float(m_step) / float(warmup_steps));
         }
 
+        INFERNO_LOG_DEBUG() << "Step: " << m_step << "  LR: " << lr << std::endl;
+
         m_step++;
 
         float bias_correction1 = 1.0f - std::pow(m_beta1, static_cast<float>(m_step));
@@ -86,7 +88,7 @@ namespace Inferno {
                     break;
 
                 default:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+                    INFERNO_LOG_ERROR() << "Invalid device type";
                     std::exit(1);
                 }
                 });

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 #include "bpetrainer.h"
 
 
@@ -50,6 +51,82 @@ void BPETrainer::train(const BPETrainerConfig& config) {
 	}
 }
 
+void BPETrainer::add_normal_text(const std::string& text, std::unordered_map<std::string, uint64_t>& piece_map) {
+
+    if (text.empty()) {
+        return;
+    }
+
+    std::vector<std::string> pieces = m_tokenizer.split(text);
+
+    for (const std::string& piece : pieces) {
+        piece_map[piece]++;
+    }
+}
+
+
+bool BPETrainer::find_special_at(const std::string& text, size_t pos, std::string& matched) const {
+
+    matched.clear();
+
+    for (const std::string& special : m_config.special_tokens) {
+
+        if (special.empty()) {
+            continue;
+        }
+
+        if (pos + special.size() > text.size()) {
+            continue;
+        }
+
+        if (text.compare(pos, special.size(), special) == 0) {
+
+            // Prefer longest match
+            if (special.size() > matched.size()) {
+                matched = special;
+            }
+        }
+    }
+
+    return !matched.empty();
+}
+
+
+void BPETrainer::process_special_aware_text(
+    const std::string& text,
+    std::unordered_map<std::string, uint64_t>& piece_map
+) {
+
+    std::string normal_buffer;
+
+    size_t i = 0;
+
+    while (i < text.size()) {
+
+        std::string matched_special;
+
+        if (find_special_at(text, i, matched_special)) {
+
+            // Flush normal text before special token
+            add_normal_text(normal_buffer, piece_map);
+
+            normal_buffer.clear();
+
+            // Skip special token entirely for BPE training
+            i += matched_special.size();
+        }
+        else {
+
+            normal_buffer.push_back(text[i]);
+
+            i++;
+        }
+    }
+
+    // Flush remaining normal text
+    add_normal_text(normal_buffer, piece_map);
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,69 +142,85 @@ void BPETrainer::train(const BPETrainerConfig& config) {
 
 std::unordered_map<std::string, uint64_t> BPETrainer::process_file(std::string& filename) {
 
+    std::unordered_map<std::string, uint64_t> piece_map;
 
-    std::unordered_map<std::string, uint64_t>  piece_map;
-    // Open the file in binary mode.
-    // Binary mode is important because we want the exact bytes from disk.
-    // We do not want newline translation or any text-mode behavior.
     std::ifstream in(filename, std::ios::binary);
 
-    // If the file failed to open, throw an error.
     if (!in) {
         std::cout << "Failed to open file: " << filename << std::endl;
         exit(1);
     }
 
-    // Size of each chunk we read from the file.
-    // 1 << 20 = 1,048,576 bytes = 1 MB
-    // 1 << 24 = 16,777,216 bytes = 16 MB
     const size_t BUFFER_SIZE = 1 << 24;
+
     size_t total_bytes = 0;
-    // Temporary buffer that will hold each chunk from the stream.
+
     std::vector<char> buffer(BUFFER_SIZE);
 
     in.seekg(0, std::ios::end);
-    uint64_t filesize = (uint64_t)in.tellg();
+    uint64_t filesize = static_cast<uint64_t>(in.tellg());
     in.seekg(0, std::ios::beg);
 
     std::cout << filesize << std::endl;
-    // Try to read a full chunk.
-    // If that fails because we hit the end of file, gcount() may still be > 0
-    // for the final partial chunk, so we keep processing in that case too.
+
+    size_t max_special_len = 0;
+
+    for (const std::string& special : m_config.special_tokens) {
+        max_special_len = std::max(max_special_len, special.size());
+    }
+
+    size_t carry_len = 32;
+
+    if (max_special_len > 0) {
+        carry_len = std::max<size_t>(32, max_special_len - 1);
+    }
+
+    std::string carry;
+
     while (in.read(buffer.data(), static_cast<std::streamsize>(buffer.size())) || in.gcount() > 0) {
 
-        // How many bytes were actually read this time.
         std::streamsize n = in.gcount();
 
-        std::string chunk(buffer.data(), n);
+        std::string chunk(buffer.data(), static_cast<size_t>(n));
 
-        std::vector<std::string> pieces = m_tokenizer.split(chunk);
+        std::string data = carry + chunk;
 
+        carry.clear();
 
-        for (auto& piece : pieces) {
-            piece_map[piece]++;
+        if (data.size() > carry_len) {
+
+            std::string safe = data.substr(0, data.size() - carry_len);
+
+            carry = data.substr(data.size() - carry_len);
+
+            process_special_aware_text(safe, piece_map);
+        }
+        else {
+            carry = data;
         }
 
+        total_bytes += static_cast<size_t>(n);
 
+        double percent =
+            (static_cast<double>(total_bytes) / static_cast<double>(filesize)) * 100.0;
 
-        /*// Process each byte in the chunk.
-        for (std::streamsize i = 0; i < n; ++i) {
+        std::cout
+            << "Bytes Processed: "
+            << total_bytes
+            << "  Percent complete: "
+            << std::fixed
+            << std::setprecision(2)
+            << percent
+            << "%"
+            << std::endl;
+    }
 
-            // Convert char to unsigned char before classification.
-            // This avoids negative-char problems.
-            unsigned char b = static_cast<unsigned char>(buffer[i]);
-
-            // Hand this byte to the tokenizer logic.
-            process_byte(b);
-        }*/
-        total_bytes += n;
-        double percent = (static_cast<double>(total_bytes) / static_cast<double>(filesize)) * 100.0;
-        std::cout << "Bytes Processed: " << total_bytes << "  Percent complete: " << std::fixed << std::setprecision(2) << percent << "%" << std::endl;
+    if (!carry.empty()) {
+        process_special_aware_text(carry, piece_map);
     }
 
     return piece_map;
 }
-
 
 
 
@@ -395,7 +488,7 @@ void BPETrainer::save() {
     }
     std::cout << token-256 << " Merges written." << std::endl;
 
-
+    
 
     std::cout << "Writing vocab file -> ";
     // Write vocab

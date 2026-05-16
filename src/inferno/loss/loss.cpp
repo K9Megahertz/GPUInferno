@@ -22,12 +22,12 @@ namespace Inferno {
 
 	Tensor MSELoss::forward(Tensor& prediction, Tensor& target) {
 		if (prediction.device() != target.device()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Incompatible device types on tensor parameters in mse_loss");
+			INFERNO_LOG_ERROR() << "Incompatible device types on tensor parameters in mse_loss" << std::endl;
 			exit(1);
 		}
 
 		if (prediction.shape() != target.shape()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Shape mismatch on tensor parameters in mse_loss");
+			INFERNO_LOG_ERROR() << "Shape mismatch on tensor parameters in mse_loss" << std::endl;
 			exit(1);
 		}
 
@@ -49,23 +49,23 @@ namespace Inferno {
 			switch (prediction.device().m_type) {
 
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal mse_loss path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal mse_loss path" << std::endl;
 				cpu_mse_loss<AT, BT, RT>(aptr, bptr, optr, prediction.numel());
 				break;
 
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal mse_loss path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal mse_loss path" << std::endl;
 				cuda_mse_loss<AT, BT, RT>(aptr, bptr, optr, prediction.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
 
 			if ((Inferno::grad_enabled) && (prediction.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "MSELoss - Making a MSELossBackward node");
+				INFERNO_LOG_DEBUG() << "MSELoss - Making a MSELossBackward node" << std::endl;
 				implOut->gradfn() = std::make_shared<MSELossBackward>(prediction, target);
 			}
 

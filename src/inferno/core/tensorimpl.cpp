@@ -45,12 +45,12 @@ namespace  Inferno {
 			m_data = std::make_shared<CUDAStorage>(bytes);
 			cudaError_t err = cudaMemcpy(m_data->raw_ptr(), data, bytes, cudaMemcpyHostToDevice);
 			if (err != cudaSuccess) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Could not cudaMemcpy in TensorImpl constructor.");
+				INFERNO_LOG_ERROR() << "Could not cudaMemcpy in TensorImpl constructor." << std::endl;
 				exit(1);
 			}
 		}
 		else {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Attempt to create TensorImpl with unknown device type.");
+			INFERNO_LOG_ERROR() << "Attempt to create TensorImpl with unknown device type." << std::endl;
 			exit(1);
 		}
 
@@ -83,7 +83,7 @@ namespace  Inferno {
 			m_data = std::make_shared<CUDAStorage>(bytes);
 		}
 		else {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Attempt to create TensorImpl with unknown device type.");
+			INFERNO_LOG_ERROR() << "Attempt to create TensorImpl with unknown device type." << std::endl;
 			exit(1);
 		}
 
@@ -391,14 +391,14 @@ namespace  Inferno {
 		// If this tensor does not require gradients,
 		// it contributes nothing to the backward graph.
 		if (!m_requires_grad) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() didnt need grad so return nullptr: " + this->m_name);
+			INFERNO_LOG_DEBUG() << "TensorImpl::grad_edge() didnt need grad so return nullptr: " << this->m_name << std::endl;
 			return nullptr;
 		}
 
 		// If this tensor was produced by an operation,
 		// it has a grad_fn (non-leaf).
 		if (m_grad_fn) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() we have a grad_fn so return it: " + this->m_name);
+			INFERNO_LOG_DEBUG() << "TensorImpl::grad_edge() we have a grad_fn so return it: " << this->m_name << std::endl;
 			return m_grad_fn;
 		}
 
@@ -407,7 +407,7 @@ namespace  Inferno {
 		//  grad_fn == nullptr
 		//  This is a leaf tensor.
 		//  Backward must terminate here and accumulate into .grad.
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::grad_edge() we have a leaf: " + this->m_name);
+		INFERNO_LOG_DEBUG() << "TensorImpl::grad_edge() we have a leaf: " << this->m_name << std::endl;
 		return get_or_create_accumulate_grad();
 	}
 
@@ -425,15 +425,15 @@ namespace  Inferno {
 
 	std::shared_ptr<Node> TensorImpl::get_or_create_accumulate_grad()
 	{
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::get_or_create_accumulate_grad(): " + this->m_name);
+		INFERNO_LOG_DEBUG() << "TensorImpl::get_or_create_accumulate_grad(): " << this->m_name << std::endl;
 		// Reuse existing accumulator if already created
 		if (m_grad_accum) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "g_grad_accum was true, so return it: " + this->m_name);
+			INFERNO_LOG_DEBUG() << "g_grad_accum was true, so return it: " << this->m_name << std::endl;
 			return m_grad_accum;
 		}
 
 		// Create it lazily
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "g_grad_accum was false, so create it: " + this->m_name);
+		INFERNO_LOG_DEBUG() << "g_grad_accum was false, so create it: " << this->m_name << std::endl;
 		m_grad_accum = std::make_shared<AccumulateGrad>(weak_from_this());
 
 		return m_grad_accum;
@@ -455,15 +455,15 @@ namespace  Inferno {
 	void TensorImpl::set_grad(Tensor& g)
 	{
 		
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "TensorImpl::set_grad");
+		INFERNO_LOG_DEBUG() << "TensorImpl::set_grad" << std::endl;
 		if (!m_grad)
 		{
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "no grad, so make shared");
+			INFERNO_LOG_DEBUG() << "no grad, so make shared" << std::endl;
 			m_grad = std::make_shared<Tensor>(g);
 		}
 		else
 		{
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "existing grad");
+			INFERNO_LOG_DEBUG() << "existing grad" << std::endl;
 			//*m_grad = add_nograd(*m_grad, g);
 			*m_grad = *m_grad + g;
 		}

@@ -37,7 +37,7 @@ namespace Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void OptimizerSGD::step() {
 
-        Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Performing SGD optmizier step");
+        INFERNO_LOG_DEBUG() << "Performing SGD optmizier step" << std::endl;
         for (auto& p : m_params) {
             auto grad = GetImpl(*p)->grad();
 
@@ -46,14 +46,14 @@ namespace Inferno {
             }
 
             if (p->device() != grad->device()) {
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "OptimizerSGD: param/grad device mismatch");
+                INFERNO_LOG_ERROR() << "OptimizerSGD: param/grad device mismatch" << std::endl;
                 exit(1);
             }
 
-            Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Stepping on: " + p->name());
+            INFERNO_LOG_DEBUG() << "Stepping on: " << p->name() << std::endl;
 
             if (p->shape() != grad->shape()) {
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "OptimizerSGD: param/grad shape mismatch");
+                INFERNO_LOG_ERROR() << "OptimizerSGD: param/grad shape mismatch" << std::endl;
                 exit(1);
             }
 
@@ -73,7 +73,7 @@ namespace Inferno {
                     // CPU Code Path
                     ////////////////////////////////////////////////////
                 case DeviceType::CPU:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal step path");
+                    INFERNO_LOG_DEBUG() << "CPU Code path - Using normal step path" << std::endl;
                     cpu_sgd_step_impl<AT,BT>(dptr, gptr, count);
                     break;
 
@@ -81,12 +81,12 @@ namespace Inferno {
                     // CUDA Code Path
                     ////////////////////////////////////////////////////
                 case DeviceType::CUDA:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal step path");
+                    INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal step path" << std::endl;
                     cuda_sgd_step_impl<AT, BT>(dptr, gptr, count, m_lr);
                     break;
 
                 default:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+                    INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
                     exit(1);
                 }
 

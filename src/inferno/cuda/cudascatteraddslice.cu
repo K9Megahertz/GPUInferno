@@ -128,10 +128,11 @@ namespace Inferno {
 			);
 
 
-		cudaFree(d_shape);
-		cudaFree(d_strides);
-		cudaFree(d_out_shape);
-		cudaFree(d_out_strides);
+		
+		check_cuda(cudaFree(d_shape), "cuda_scatter_add_slice failed to cudaFree");		
+		check_cuda(cudaFree(d_strides), "cuda_scatter_add_slice failed to cudaFree");		
+		check_cuda(cudaFree(d_out_shape), "cuda_scatter_add_slice failed to cudaFree");		
+		check_cuda(cudaFree(d_out_strides), "cuda_scatter_add_slice failed to cudaFree");
 		return;
 	
 	}

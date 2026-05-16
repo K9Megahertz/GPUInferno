@@ -12,14 +12,16 @@
 #include "inferno/gradfn/concatbackward.h"
 #include "inferno/gradfn/selectbackward.h"
 #include "inferno/gradfn/contiguousbackward.h"
-#include "inferno/util/logger.h"
+#include "inferno/gradfn/flashattentionbackward.h"
+#include <logger/logger.h>
 #include "tensorimpl.h"
 #include "inferno/gradengine/engine.h"
 #include "inferno/cuda/cudaops.h"
 #include "inferno/core/cpuops.h"
 #include "inferno/core/dtype_dispatch.h"
 
-int g_mmcountfast = 0;
+int g_mmcountcublasSgemm = 0;
+int g_mmcountcublasSgemmStridedBatched = 0;
 int g_mmcountslow = 0;
 
 std::unordered_map<std::string, size_t> g_matmul_counts;
@@ -42,7 +44,7 @@ namespace Inferno {
 
 
 		if (A.device() != B.device()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Incompatible device types on tensor parameters in Add");
+			INFERNO_LOG_ERROR() << "Incompatible device types on tensor parameters in Add" << std::endl;
 			exit(1);
 		}
 
@@ -81,7 +83,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal add path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal add path" << std::endl;
 				cpu_add<AT,BT,RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -89,17 +91,17 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal add path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal add path" << std::endl;
 				cuda_add<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Add - Making a AddBackward node");
+				INFERNO_LOG_DEBUG() << "Add - Making a AddBackward node" << std::endl;
 				implout->gradfn() = std::make_shared<AddBackward>(A, B);
 			}
 
@@ -124,7 +126,7 @@ namespace Inferno {
 
 
 		if (A.device() != B.device()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Incompatible device types on tensor parameters in Add");
+			INFERNO_LOG_ERROR() << "Incompatible device types on tensor parameters in Add" << std::endl;
 			exit(1);
 		}
 
@@ -163,7 +165,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal subtract path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal subtract path" << std::endl;
 				cpu_subtract<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -171,17 +173,17 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal subtract path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal subtract path" << std::endl;
 				cuda_subtract<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Subtract - Making a SubtractBackward node");
+				INFERNO_LOG_DEBUG() << "Subtract - Making a SubtractBackward node" << std::endl;
 				implout->gradfn() = std::make_shared<SubtractBackward>(A, B);
 			}
 
@@ -205,7 +207,7 @@ namespace Inferno {
 
 
 		if (A.device() != B.device()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Incompatible device types on tensor parameters in Add");
+			INFERNO_LOG_ERROR() << "Incompatible device types on tensor parameters in Add" << std::endl;
 			exit(1);
 		}
 
@@ -241,7 +243,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal multiply path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal multiply path" << std::endl;
 				cpu_multiply<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -249,17 +251,17 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal multiply path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal multiply path" << std::endl;
 				cuda_multiply<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Multiply - Making a MultiplyBackward node");
+				INFERNO_LOG_DEBUG() << "Multiply - Making a MultiplyBackward node" << std::endl;
 				implout->gradfn() = std::make_shared<MultiplyBackward>(A, B);
 			}
 
@@ -285,7 +287,7 @@ namespace Inferno {
 
 
 		if (A.device() != B.device()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Incompatible device types on tensor parameters in divide");
+			INFERNO_LOG_ERROR() << "Incompatible device types on tensor parameters in divide" << std::endl;
 			exit(1);
 		}
 
@@ -327,7 +329,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal divide path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal divide path" << std::endl;
 				cpu_divide<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
@@ -335,17 +337,17 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal divide path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal divide path" << std::endl;
 				cuda_divide<AT, BT, RT>(aptr, bptr, optr, A.shape(), A.strides(), A.offset(), B.shape(), B.strides(), B.offset(), out.shape(), out.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Divide - Making a DivideBackward node");
+				INFERNO_LOG_DEBUG() << "Divide - Making a DivideBackward node" << std::endl;
 				implout->gradfn() = std::make_shared<DivideBackward>(A, B);
 			}
 
@@ -395,7 +397,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal negate path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal negate path" << std::endl;
 				cpu_negate<AT>(aptr, optr, out.numel());
 				break;
 
@@ -403,12 +405,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal negate path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal negate path" << std::endl;
 				cuda_negate<AT>(aptr, optr, out.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
@@ -434,27 +436,37 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Tensor matmul(const Tensor& A, const Tensor& B, std::string label) {
+	Tensor matmul(const Tensor& A, const Tensor& B, std::string label, bool transA, bool transB) {
 
 
 		bool a_vec = (A.ndim() == 1);
 		bool b_vec = (B.ndim() == 1);
 
-		Tensor A2 =  make_view(A, A.shape(), A.strides(), 0, "A2");
-		Tensor B2 =  make_view(B, B.shape(), B.strides(), 0, "B2");
+		Tensor A2 =  make_view(A, A.shape(), A.strides(), A.offset(), "A2");
+		Tensor B2 =  make_view(B, B.shape(), B.strides(), B.offset(), "B2");
 
+
+		//if (a_vec) {
+            //A2.shape() = { 1, A2.shape()[0] };
+			//A2.strides() = A2.calculate_strides(A2.shape());
+		//}
 
 		if (a_vec) {
-			A2.shape() = { 1, A2.shape()[0] };
-			A2.strides() = A2.calculate_strides(A2.shape());
+			A2.shape() = { 1, A.shape()[0] };
+			A2.strides() = { 0, A.strides()[0] };
 		}
+
+		//if (b_vec) {
+			//B2.shape() = { B2.shape()[0], 1 };
+			//B2.strides() = B2.calculate_strides(B2.shape());
+		//}
 
 		if (b_vec) {
-			B2.shape() = { B2.shape()[0], 1 };
-			B2.strides() = B2.calculate_strides(B2.shape());
+			B2.shape() = { B.shape()[0], 1 };
+			B2.strides() = { B.strides()[0], 0 };
 		}
 
-		Tensor out = matmul_impl(A2, B2, label);
+		Tensor out = matmul_impl(A2, B2, label, transA, transB);
 
 		if (a_vec && b_vec)
 			out.shape()={1};   // scalar	
@@ -467,7 +479,7 @@ namespace Inferno {
 
 		
 		if ((Inferno::grad_enabled) && (A.requires_grad() || B.requires_grad())) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Matmul - Making a MMBackward node");
+			INFERNO_LOG_DEBUG() << "Matmul - Making a MMBackward node" << std::endl;
 			GetImpl(out)->gradfn() = std::make_shared<MMBackward>(A, B);
 		}
 			
@@ -489,7 +501,7 @@ namespace Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Tensor matmul_impl(const Tensor& A, const Tensor& B, std::string label) {
+	Tensor matmul_impl(const Tensor& A, const Tensor& B, std::string label, bool transA, bool transB) {
 
 		return dispatchAnyTwo(A.dtype(), B.dtype(), [&](auto TA, auto TB) {
 			using AT = typename decltype(TA)::type;
@@ -503,7 +515,7 @@ namespace Inferno {
 
 			// Ensure tensors have at least 1 dimension
 			if (a_ndim < 1 || b_ndim < 1) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Tensors must have at least 1 dimension for matmul");
+				INFERNO_LOG_ERROR() << "Tensors must have at least 1 dimension for matmul" << std::endl;
 				exit(1);
 			}
 
@@ -533,13 +545,14 @@ namespace Inferno {
 				b_padded_strides[b_pad_offset + i] = B.strides()[i];
 			}
 
-			size_t a_rows = a_padded_shape[a_padded_shape.size() - 2];
-			size_t a_cols = a_padded_shape[a_padded_shape.size() - 1];
-			size_t b_rows = b_padded_shape[b_padded_shape.size() - 2];
-			size_t b_cols = b_padded_shape[b_padded_shape.size() - 1];
+			size_t a_rows = transA ? a_padded_shape[a_padded_shape.size() - 1] : a_padded_shape[a_padded_shape.size() - 2];
+			size_t a_cols = transA ? a_padded_shape[a_padded_shape.size() - 2] : a_padded_shape[a_padded_shape.size() - 1];
+
+			size_t b_rows = transB ? b_padded_shape[b_padded_shape.size() - 1] : b_padded_shape[b_padded_shape.size() - 2];
+			size_t b_cols = transB ? b_padded_shape[b_padded_shape.size() - 2] : b_padded_shape[b_padded_shape.size() - 1];
 
 			if (a_cols != b_rows) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Incompatible dimensions for matrix multiplication");
+				INFERNO_LOG_ERROR() << "Incompatible dimensions for matrix multiplication" << std::endl;
 				exit(1);
 			}
 
@@ -575,59 +588,21 @@ namespace Inferno {
 
 			switch (A.device().m_type) {
 
-				////////////////////////////////////////////////////
-				// CPU Code Path
-				////////////////////////////////////////////////////
+			////////////////////////////////////////////////////
+			// CPU Code Path
+			////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal matmul path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal matmul path" << std::endl;
+				//TODO: need to add trans to this and use it
 				cpu_matmul<AT, BT, RT>(aptr, bptr, optr, a_padded_shape, a_padded_strides, b_padded_shape, b_padded_strides, out_shape);
 				break;
 
-				////////////////////////////////////////////////////
-				// CUDA Code Path
-				////////////////////////////////////////////////////
-			/*case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal matmul path");
-				if (A.is_contiguous() && B.is_contiguous()) {
-
-					if constexpr (
-						std::is_same_v<AT, float> && std::is_same_v<BT, float> && std::is_same_v<RT, float>) {
-						g_mmcountfast++;
-						cublas_mm<AT, BT, RT>(aptr, bptr, optr, a_rows, a_cols, b_cols);
-					}
-					else if constexpr (std::is_same_v<AT, double> && std::is_same_v<BT, double> && std::is_same_v<RT, double>) {
-						g_mmcountfast++;
-						cublas_mm<AT, BT, RT>(aptr, bptr, optr, a_rows, a_cols, b_cols);
-					}
-					else {
-						g_mmcountslow++;
-						cuda_matmul<AT, BT, RT>(
-							aptr, bptr, optr,
-							a_padded_shape, a_padded_strides,
-							b_padded_shape, b_padded_strides,
-							out_shape
-						);
-					}
-				}
-				else {
-					g_mmcountslow++;
-					cuda_matmul<AT, BT, RT>(
-						aptr, bptr, optr,
-						a_padded_shape, a_padded_strides,
-						b_padded_shape, b_padded_strides,
-						out_shape
-					);
-				}
-				break;
-
-			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
-				exit(1);
-			}*/
-
+			////////////////////////////////////////////////////
+			// CUDA Code Path
+			////////////////////////////////////////////////////			
 			case DeviceType::CUDA:
 
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using matmul path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using matmul path" << std::endl;
 
 				const size_t M = a_rows;
 				const size_t K = a_cols;
@@ -639,24 +614,34 @@ namespace Inferno {
 
 				if constexpr (cublas_supported_v<AT, BT, RT>) {
 
-					// Plain 2D fast path
-					if (!is_batched && A.is_contiguous() && B.is_contiguous()) {
-						g_mmcountfast++;
+					// Plain 2D fast path uses CublasSgemm (or cublasDgemm if dtype is double)
+					if (A.is_contiguous() && B.is_contiguous() && !is_batched) {
+						g_mmcountcublasSgemm++;						
 						g_matmul_counts[label]++;
-						cublas_mm_row_major<AT, BT, RT>(aptr, bptr, optr, M, K, N);
+						cublas_mm_row_major<AT, BT, RT>(aptr, bptr, optr, M, K, N, transA, transB);
 					}
 
-					// Batched fast path
-					else if (A.is_contiguous() &&
-						B.is_contiguous() &&
-						can_use_strided_batched_fastpath(a_batch_shape, b_batch_shape, out_batch_shape))
-					{
+					// Batched fast path can use this is either but not both the matrices are just a batch of 1
+					// uses cublasSgemmStridedBatched
+					else if (A.is_contiguous() && B.is_contiguous() && can_use_strided_batched_fastpath(a_batch_shape, b_batch_shape, out_batch_shape))	{
+
 						long long strideA = 0;
 						long long strideB = 0;
 						long long strideC = static_cast<long long>(M * N);
 
+						size_t A_phys_rows = a_padded_shape[max_rank - 2];
+						size_t A_phys_cols = a_padded_shape[max_rank - 1];
+
+						size_t B_phys_rows = b_padded_shape[max_rank - 2];
+						size_t B_phys_cols = b_padded_shape[max_rank - 1];
+
+						long long physicalStrideA = static_cast<long long>(A_phys_rows * A_phys_cols);
+						long long physicalStrideB = static_cast<long long>(B_phys_rows * B_phys_cols);
+						long long physicalStrideC = static_cast<long long>(M * N);
+
 						if (a_batch_shape == out_batch_shape) {
-							strideA = static_cast<long long>(M * K);
+							//strideA = static_cast<long long>(M * K);
+							strideA = physicalStrideA;
 						}
 						else if (all_ones(a_batch_shape)) {
 							strideA = 0;
@@ -666,7 +651,8 @@ namespace Inferno {
 						}
 
 						if (b_batch_shape == out_batch_shape) {
-							strideB = static_cast<long long>(K * N);
+							//strideB = static_cast<long long>(K * N);
+							strideB = physicalStrideB;
 						}
 						else if (all_ones(b_batch_shape)) {
 							strideB = 0;
@@ -676,7 +662,7 @@ namespace Inferno {
 						}
 
 						if (strideA >= 0 && strideB >= 0) {
-							g_mmcountfast++;
+							g_mmcountcublasSgemmStridedBatched++;
 							g_matmul_counts[label]++;
 							cublas_mm_strided_batched_row_major<AT, BT, RT>(
 								aptr,
@@ -688,7 +674,9 @@ namespace Inferno {
 								strideA,
 								strideB,
 								strideC,
-								static_cast<int>(batch_count_sz)
+								static_cast<int>(batch_count_sz),
+								transA,
+								transB
 							);
 						}
 						else {
@@ -698,7 +686,9 @@ namespace Inferno {
 								aptr, bptr, optr,
 								a_padded_shape, a_padded_strides,
 								b_padded_shape, b_padded_strides,
-								out_shape
+								out_shape,
+								transA,
+								transB
 							);
 						}
 					}
@@ -711,18 +701,22 @@ namespace Inferno {
 							aptr, bptr, optr,
 							a_padded_shape, a_padded_strides,
 							b_padded_shape, b_padded_strides,
-							out_shape
+							out_shape,
+							transA,
+							transB
 						);
 					}
 				}
-				else {
+				else { //cublas not supported, so failback to slow 
 					g_mmcountslow++;
 					g_matmul_counts[label]++;
 					cuda_matmul<AT, BT, RT>(
 						aptr, bptr, optr,
 						a_padded_shape, a_padded_strides,
 						b_padded_shape, b_padded_strides,
-						out_shape
+						out_shape,
+						transA,
+						transB
 					);
 				}
 
@@ -734,6 +728,154 @@ namespace Inferno {
 
 	}
 
+
+	Tensor matmul_nt(const Tensor& A, const Tensor& B, std::string label) {
+
+		return dispatchAnyTwo(A.dtype(), B.dtype(), [&](auto TA, auto TB) {
+			using AT = typename decltype(TA)::type;
+			using BT = typename decltype(TB)::type;
+			using RT = promote_t<AT, BT>;
+
+			if (A.ndim() != 2 || B.ndim() != 2) {
+				INFERNO_LOG_ERROR() << "matmul_nt expects 2D tensors" << std::endl;
+				std::cout << A << std::endl;
+				std::cout << B << std::endl;
+				exit(1);
+			}
+
+			if (!A.is_contiguous() || !B.is_contiguous()) {
+				INFERNO_LOG_ERROR() << "matmul_nt expects contiguous tensors" << std::endl;
+				exit(1);
+			}
+
+			if (A.device() != B.device()) {
+				INFERNO_LOG_ERROR() << "matmul_nt expects tensors on same device" << std::endl;
+				exit(1);
+			}
+
+
+
+			const size_t M = A.shape()[0];
+			const size_t K = A.shape()[1];
+
+			const size_t N = B.shape()[0];
+			const size_t Kb = B.shape()[1];
+
+			if (K != Kb) {
+				INFERNO_LOG_ERROR() << "matmul_nt incompatible shapes" << std::endl;
+				exit(1);
+			}
+
+			Tensor out(dtype_of_v<RT>, { M, N }, "matmul_nt", A.device());
+
+			const AT* aptr = GetImpl(A)->data_as_ptr<AT>();
+			const BT* bptr = GetImpl(B)->data_as_ptr<BT>();
+			RT* optr = GetImpl(out)->data_as_ptr<RT>();
+
+			switch (A.device().m_type) {
+			case DeviceType::CUDA:
+				if constexpr (std::is_same_v<AT, RT> && std::is_same_v<BT, RT> && cublas_supported_v<AT, BT, RT>) {
+
+					g_mmcountcublasSgemm++;
+					g_matmul_counts[label]++;
+
+					//this will only ever be called with float or double types
+					cublas_mm_row_major_nt<RT>(
+						aptr,
+						bptr,
+						optr,
+						M,
+						K,
+						N
+					);
+				}
+				else {
+					INFERNO_LOG_ERROR() << "matmul_nt unsupported dtype for cuBLAS or dtypes were mixed" << std::endl;
+					exit(1);
+				}
+				break;
+
+			default:
+				INFERNO_LOG_ERROR() << "matmul_nt currently only supports CUDA" << std::endl;
+				exit(1);
+			}
+
+			return out;
+			});
+	}
+
+	Tensor matmul_tn(const Tensor& A, const Tensor& B, std::string label) {
+
+		return dispatchAnyTwo(A.dtype(), B.dtype(), [&](auto TA, auto TB) {
+			using AT = typename decltype(TA)::type;
+			using BT = typename decltype(TB)::type;
+			using RT = promote_t<AT, BT>;
+
+			if (A.ndim() != 2 || B.ndim() != 2) {
+				INFERNO_LOG_ERROR() << "matmul_nt expects 2D tensors" << std::endl;
+				exit(1);
+			}
+
+			if (!A.is_contiguous() || !B.is_contiguous()) {
+				INFERNO_LOG_ERROR() << "matmul_nt expects contiguous tensors" << std::endl;
+				exit(1);
+			}
+
+			if (A.device() != B.device()) {
+				INFERNO_LOG_ERROR() << "matmul_nt expects tensors on same device" << std::endl;
+				exit(1);
+			}
+
+
+
+			const size_t M = A.shape()[0];
+			const size_t K = A.shape()[1];
+
+			const size_t N = B.shape()[0];
+			const size_t Kb = B.shape()[1];
+
+			if (K != Kb) {
+				INFERNO_LOG_ERROR() << "matmul_nt incompatible shapes" << std::endl;
+				exit(1);
+			}
+
+			Tensor out(dtype_of_v<RT>, { M, N }, "matmul_nt", A.device());
+
+			const AT* aptr = GetImpl(A)->data_as_ptr<AT>();
+			const BT* bptr = GetImpl(B)->data_as_ptr<BT>();
+			RT* optr = GetImpl(out)->data_as_ptr<RT>();
+
+			switch (A.device().m_type) {
+			case DeviceType::CUDA:
+				if constexpr (std::is_same_v<AT, RT> && std::is_same_v<BT, RT> && cublas_supported_v<AT, BT, RT>) {
+
+					g_mmcountcublasSgemm++;
+					g_matmul_counts[label]++;
+
+					//this will only ever be called with float or double types
+					cublas_mm_row_major_tn<RT>(
+						aptr,
+						bptr,
+						optr,
+						M,
+						K,
+						N
+					);
+				}
+				else {
+					INFERNO_LOG_ERROR() << "matmul_nt unsupported dtype for cuBLAS or dtypes were mixed" << std::endl;
+					exit(1);
+				}
+				break;
+
+			default:
+				INFERNO_LOG_ERROR() << "matmul_nt currently only supports CUDA" << std::endl;
+				exit(1);
+			}
+
+			return out;
+			});
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -758,12 +900,12 @@ namespace Inferno {
 
 		if (dima < 0 || dima >= static_cast<int>(A.ndim()) ||
 			dimb < 0 || dimb >= static_cast<int>(A.ndim())) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Transpose: dimension out of range");
+			INFERNO_LOG_ERROR() << "Transpose: dimension out of range" << std::endl;
 			exit(1);
 		}
 
 		if (dima == dimb) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Transpose: Dim A and Dim B match");
+			INFERNO_LOG_ERROR() << "Transpose: Dim A and Dim B match" << std::endl;
 			exit(1);
 		}	
 						
@@ -775,7 +917,7 @@ namespace Inferno {
 		std::swap(newshape[dima], newshape[dimb]);
 		std::swap(newstrides[dima], newstrides[dimb]);
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal transpose path");
+		INFERNO_LOG_DEBUG() << "AGN Code path - Using normal transpose path" << std::endl;
 
 		
 		Tensor out = make_view(A,newshape,newstrides,GetImpl(A)->offset(),"transpose_"+A.name());
@@ -864,30 +1006,29 @@ namespace Inferno {
 			axis += static_cast<int>(A.shape().size());
 
 		if (axis < 0 || axis >= static_cast<int>(A.shape().size())) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,"Slice axis out of bounds.Axis specified : " + std::to_string(axis) + " Tensor rank: " + std::to_string(A.shape().size())
-			);
+			INFERNO_LOG_ERROR() << "Slice axis out of bounds.Axis specified : " << std::to_string(axis) << " Tensor rank: " << std::to_string(A.shape().size()) << std::endl;
 			exit(1);
 		}
 
 		if (step == 0) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Slice step cannot be 0.");
+			INFERNO_LOG_ERROR() << "Slice step cannot be 0." << std::endl;
 			exit(1);
 		}
 
 		const size_t axis_size = A.shape()[axis];
 
 		if (start >= axis_size) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,"Slice start out of bounds. Start: " + std::to_string(start) + " Axis size: " + std::to_string(axis_size));
+			INFERNO_LOG_ERROR() << "Slice start out of bounds. Start: " << std::to_string(start) << " Axis size: " << std::to_string(axis_size) << std::endl;
 			exit(1);
 		}
 
 		if (end >= axis_size) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,"Slice end out of bounds. End: " + std::to_string(end) + " Axis size: " + std::to_string(axis_size));
+			INFERNO_LOG_ERROR() << "Slice end out of bounds. End: " << std::to_string(end) << " Axis size: " << std::to_string(axis_size) << std::endl;
 			exit(1);
 		}
 
 		if (end < start) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,"Slice end must be >= start. Start: " + std::to_string(start) +	" End: " + std::to_string(end));
+			INFERNO_LOG_ERROR() << "Slice end must be >= start. Start: " << std::to_string(start) << " End: " << std::to_string(end) << std::endl;
 			exit(1);
 		}
 
@@ -904,7 +1045,7 @@ namespace Inferno {
 
 		size_t offset = A.offset() + A.strides()[axis] * start;
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal slice path");
+		INFERNO_LOG_DEBUG() << "AGN Code path - Using normal slice path" << std::endl;
 		Tensor view = make_view(A, newshape, newstrides, offset, "slice_of_" + A.name());
 
 		if ((Inferno::grad_enabled) && (A.requires_grad())) {
@@ -932,7 +1073,7 @@ namespace Inferno {
 
 		std::vector<size_t> newstrides = Tensor::calculate_strides(newshape);
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal reshape path");
+		INFERNO_LOG_DEBUG() << "AGN Code path - Using normal reshape path" << std::endl;
 		
 		Tensor out = make_view(A, newshape, newstrides, A.offset(), "reshape_of_" + A.name());
 
@@ -964,7 +1105,7 @@ namespace Inferno {
 
 		//if there are no tensors in the list, error out
 		if (tensors.empty()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: tensor list is empty.");
+			INFERNO_LOG_ERROR() << "concat: tensor list is empty." << std::endl;
 			exit(1);
 		}
 
@@ -977,7 +1118,7 @@ namespace Inferno {
 
 		//if there are no dimensions, error out
 		if (ndim == 0) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: scalar tensors not supported.");
+			INFERNO_LOG_ERROR() << "concat: scalar tensors not supported." << std::endl;
 			exit(1);
 		}
 
@@ -990,7 +1131,7 @@ namespace Inferno {
 
 		//verify the axis specified is within the range of the tensor
 		if (axis < 0 || axis >= static_cast<int>(ndim)) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: axis out of bounds.");
+			INFERNO_LOG_ERROR() << "concat: axis out of bounds." << std::endl;
 			exit(1);
 		}
 
@@ -1013,19 +1154,19 @@ namespace Inferno {
 
 			//current tensor data type does not match the first one
 			if (t.dtype() != dtype) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: dtype mismatch.");
+				INFERNO_LOG_ERROR() << "concat: dtype mismatch." << std::endl;
 				exit(1);
 			}
 
 			//current tensor device does not match the first one
 			if (t.device() != device) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: device mismatch.");
+				INFERNO_LOG_ERROR() << "concat: device mismatch." << std::endl;
 				exit(1);
 			}
 
 			//current tensor rank does not match the first one
 			if (t.ndim() != ndim) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "concat: rank mismatch.");
+				INFERNO_LOG_ERROR() << "concat: rank mismatch." << std::endl;
 				exit(1);
 			}
 
@@ -1034,8 +1175,7 @@ namespace Inferno {
 				if (d == static_cast<size_t>(axis)) continue;
 
 				if (t.shape()[d] != first.shape()[d]) {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-						"concat: shapes must match on all non-concat axes.");
+					INFERNO_LOG_ERROR() << "concat: shapes must match on all non-concat axes." << std::endl;
 					exit(1);
 				}
 			}
@@ -1121,7 +1261,7 @@ namespace Inferno {
 			switch (device.m_type) {
 
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal concat path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal concat path" << std::endl;
 				cpu_concat<AT>(
 					src_ptrs,
 					optr,
@@ -1139,7 +1279,7 @@ namespace Inferno {
 				break;
 
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal concat path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal concat path" << std::endl;
 				cuda_concat<AT>(
 					src_ptrs,
 					optr,
@@ -1157,13 +1297,13 @@ namespace Inferno {
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 			});
 
 		if ((Inferno::grad_enabled) && (req_grad)) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Concat - Making a ConcatBackward node");
+			INFERNO_LOG_DEBUG() << "Concat - Making a ConcatBackward node" << std::endl;
 			GetImpl(out)->gradfn() = std::make_shared<ConcatBackward>(tensors, axis);
 
 		}
@@ -1192,12 +1332,12 @@ namespace Inferno {
 		if (ax < 0) ax += ndim;
 
 		if (ax < 0 || ax >= ndim) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "select: invalid axis");
+			INFERNO_LOG_ERROR() << "select: invalid axis" << std::endl;
 			exit(1);
 		}
 
 		if (index >= shape[ax]) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "select: index out of bounds");
+			INFERNO_LOG_ERROR() << "select: index out of bounds" << std::endl;
 			exit(1);
 		}
 
@@ -1209,11 +1349,11 @@ namespace Inferno {
 		new_shape.erase(new_shape.begin() + ax);
 		new_strides.erase(new_strides.begin() + ax);
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AGN Code path - Using normal select path");
+		INFERNO_LOG_DEBUG() << "AGN Code path - Using normal select path" << std::endl;
 		Tensor out = make_view(A, new_shape, new_strides, new_offset, A.name() + ".select");
 
 		if (Inferno::grad_enabled && A.requires_grad()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Select - Making a SelectBackward node");
+			INFERNO_LOG_DEBUG() << "Select - Making a SelectBackward node" << std::endl;
 			GetImpl(out)->gradfn() = std::make_shared<SelectBackward>(A, ax, index);
 		}
 
@@ -1259,7 +1399,7 @@ namespace Inferno {
 					// CPU Code Path
 					////////////////////////////////////////////////////
 				case DeviceType::CPU:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal masked fill path");
+					INFERNO_LOG_DEBUG() << "CPU Code path - Using normal masked fill path" << std::endl;
 					cpu_masked_fill<AT, MT>(
 						iptr,mptr,optr,
 						input.shape(),input.strides(),input.offset(),
@@ -1273,12 +1413,12 @@ namespace Inferno {
 					// CUDA Code Path
 					////////////////////////////////////////////////////
 				case DeviceType::CUDA: {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal masked fill path");					
+					INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal masked fill path" << std::endl;
 					cuda_masked_fill<AT, MT>(iptr, mptr, optr, input.shape(), input.strides(), input.offset(), mask.shape(), mask.strides(), mask.offset(), out.numel(), static_cast<AT>(value));
 					break;
 				}
 				default:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+					INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 					exit(1);
 				}
 			});
@@ -1305,7 +1445,9 @@ namespace Inferno {
 			return A;
 		}
 
-		Tensor out(A.dtype(), A.shape(), "contiguous_of_" + A.name(), A.device());
+		bool gradreq = Inferno::grad_enabled && A.requires_grad();
+
+		Tensor out(A.dtype(), A.shape(), "contiguous_of_" + A.name(), A.device(), gradreq);
 
 
 		dispatchAny(A.dtype(), [&](auto TagA) {
@@ -1324,17 +1466,17 @@ namespace Inferno {
 			size_t N = A.numel();
 
 			if (A.device().is_cpu()) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal contiguous path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal contiguous path" << std::endl;
 				cpu_contiguous_copy<AT>(aptr, optr, shape, strides, offset, N);
 			}
 			else {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal contiguous path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal contiguous path" << std::endl;
 				cuda_contiguous_copy<AT>(aptr, optr, shape, strides, offset, N);
 			}
 			});
 
 		if (Inferno::grad_enabled && A.requires_grad()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Select - Making a ContiguousBackward node");
+			INFERNO_LOG_DEBUG() << "Select - Making a ContiguousBackward node" << std::endl;
 			GetImpl(out)->gradfn() = std::make_shared<ContiguousBackward>(A);
 		}
 
@@ -1355,7 +1497,7 @@ namespace Inferno {
 	Tensor triu(const Tensor& A, int diagonal)
 	{
 		if (A.ndim() < 2) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,"triu requires tensor rank >= 2");
+			INFERNO_LOG_ERROR() << "triu requires tensor rank >= 2" << std::endl;
 			exit(1);
 		}
 
@@ -1373,7 +1515,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal triu path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal triu path" << std::endl;
 				cpu_triu<AT>(aptr, optr, A.shape(), A.strides(), A.offset(), out.numel(), diagonal);
 				break;
 
@@ -1381,8 +1523,90 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal triu path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal triu path" << std::endl;
 				cuda_triu<AT>(aptr, optr, A.shape(), A.strides(), A.offset(), out.numel(), diagonal);
+				break;
+
+			default:
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
+				exit(1);
+			}
+
+
+			});
+
+		return out;
+
+	}
+
+	/*Tensor flash_attention_simple_forward(const Tensor& Q, const Tensor& K, const Tensor& V, bool causal) {
+
+
+		std::vector<size_t> qshape = Q.shape();
+		std::vector<size_t> kshape = K.shape();
+		std::vector<size_t> vshape = V.shape();
+
+		if (qshape.size() != 4 || kshape.size() != 4 || vshape.size() != 4) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR , "flash_attention_simple_forward expects q, k, v to be [B, H, T, D]");
+			exit(1);
+		}
+
+		if (qshape != kshape || qshape != vshape) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward expects q, k, v to have the same shape");
+			exit(1);
+		}
+
+		if (!Q.is_contiguous() || !K.is_contiguous() || !V.is_contiguous()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward expects q, k, v to be contiguous");
+			exit(1);
+		}
+
+		if (Q.device() != K.device() || Q.device() != V.device()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward expects q, k, v to be on the same device");
+			exit(1);
+		}
+
+		if (!Q.device().is_cuda()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward currently only supports CUDA tensors");
+			exit(1);
+		}
+
+		if (Q.dtype() != K.dtype() || Q.dtype() != V.dtype()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward expects q, k, v to have the same dtype");
+			exit(1);
+		}
+
+		const size_t B = qshape[0];
+		const size_t H = qshape[1];
+		const size_t T = qshape[2];
+		const size_t D = qshape[3];
+
+		Inferno::Tensor out(Q.dtype(), qshape, "flash_attention_simple_forward_out", Q.device());		
+
+		dispatchFloat(Q.dtype(), [&](auto TagA) {
+			using AT = typename decltype(TagA)::type;
+
+			const AT* qptr = GetImpl(Q)->data_as_ptr<AT>();
+			const AT* kptr = GetImpl(K)->data_as_ptr<AT>();
+			const AT* vptr = GetImpl(V)->data_as_ptr<AT>();
+			AT* optr = GetImpl(out)->data_as_ptr<AT>();
+
+			switch (out.device().m_type) {
+
+				////////////////////////////////////////////////////
+				// CPU Code Path
+				////////////////////////////////////////////////////
+			case DeviceType::CPU:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal triu path");
+				//cpu_flash_attention_simple_forward<AT>(qptr, kptr, vptr, optr,	B, H, T, D, causal);
+				break;
+
+				////////////////////////////////////////////////////
+				// CUDA Code Path
+				////////////////////////////////////////////////////
+			case DeviceType::CUDA:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal triu path");
+				cuda_flash_attention_simple_forward<AT>(qptr, kptr, vptr, optr, B, H, T, D, causal);
 				break;
 
 			default:
@@ -1394,7 +1618,205 @@ namespace Inferno {
 			});
 
 		return out;
+	}*/
 
+	Tensor flash_attention_simple_forward(const Tensor& Q, const Tensor& K, const Tensor& V, bool causal) {
+
+		std::vector<size_t> qshape = Q.shape();
+		std::vector<size_t> kshape = K.shape();
+		std::vector<size_t> vshape = V.shape();
+
+		if (qshape.size() != 4 || kshape.size() != 4 || vshape.size() != 4) {
+			INFERNO_LOG_ERROR() << "flash_attention_simple_forward expects Q, K, V to be [B, H, T, D]" << std::endl;
+			exit(1);
+		}
+
+		if (qshape != kshape || qshape != vshape) {
+			INFERNO_LOG_ERROR() << "flash_attention_simple_forward expects Q, K, V to have the same shape" << std::endl;
+			exit(1);
+		}
+
+		if (!Q.is_contiguous() || !K.is_contiguous() || !V.is_contiguous()) {
+			INFERNO_LOG_ERROR() << "flash_attention_simple_forward expects Q, K, V to be contiguous" << std::endl;
+			exit(1);
+		}
+
+		if (Q.device() != K.device() || Q.device() != V.device()) {
+			INFERNO_LOG_ERROR() << "flash_attention_simple_forward expects Q, K, V to be on the same device" << std::endl;
+			exit(1);
+		} 
+
+		if (Q.dtype() != K.dtype() || Q.dtype() != V.dtype()) {
+			INFERNO_LOG_ERROR() << "flash_attention_simple_forward expects Q, K, V to have the same dtype" << std::endl;
+			exit(1);
+		}
+
+		const size_t B = qshape[0];
+		const size_t H = qshape[1];
+		const size_t T = qshape[2];
+		const size_t D = qshape[3];
+
+		Tensor out(Q.dtype(), qshape, "flash_attention_simple_forward_out", Q.device());
+
+		dispatchFloat(Q.dtype(), [&](auto TagA) {
+			using AT = typename decltype(TagA)::type;
+
+			const AT* qptr = GetImpl(Q)->data_as_ptr<AT>();
+			const AT* kptr = GetImpl(K)->data_as_ptr<AT>();
+			const AT* vptr = GetImpl(V)->data_as_ptr<AT>();
+			AT* optr = GetImpl(out)->data_as_ptr<AT>();
+
+			switch (Q.device().m_type) {
+
+			case DeviceType::CPU:
+				INFERNO_LOG_ERROR() << "flash_attention_simple_forward CPU path is not implemented yet" << std::endl;
+				exit(1);
+				break;
+
+			case DeviceType::CUDA:
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using flash_attention_simple_forward" << std::endl;
+
+				cuda_flash_attention_simple_forward2<AT>(
+					qptr,
+					kptr,
+					vptr,
+					optr,
+					B,
+					H,
+					T,
+					D,
+					causal
+				);
+				break;
+
+			default:
+				INFERNO_LOG_ERROR() << "flash_attention_simple_forward invalid device type" << std::endl;
+				exit(1);
+			}
+			});
+
+		if (Inferno::grad_enabled && (Q.requires_grad() || K.requires_grad() || V.requires_grad())) {
+			INFERNO_LOG_DEBUG() << "FlashAttention - Making a FlashAttentionBackward node" << std::endl;
+			GetImpl(out)->gradfn() = std::make_shared<FlashAttentionBackward>(Q, K, V, out, causal);
+			out.set_requires_grad(true);
+			
+		}
+
+
+		return out;
+	}
+
+	/*Tensor flash_attention_simple_forward(const Tensor& qkv, bool causal) {
+
+
+		Tensor out(qkv.dtype(), qkv.shape(), "flash_attention_simple_forward_out", qkv.device());
+
+		dispatchFloat(qkv.dtype(), [&](auto TagA) {
+			using AT = typename decltype(TagA)::type;
+
+			const AT* qkvptr = GetImpl(qkv)->data_as_ptr<AT>();			
+			AT* optr = GetImpl(out)->data_as_ptr<AT>();
+
+			switch (qkv.device().m_type) {
+
+			case DeviceType::CPU:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward CPU path is not implemented yet");
+				exit(1);
+				break;
+
+			case DeviceType::CUDA:
+				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using flash_attention_simple_forward");
+
+				//cuda_flash_attention_simple_forward2<AT>(qkvptr, B, H, T, D, causal);
+				break;
+
+			default:
+				Logger::Append(
+					Logger::LogLevel::LOGLEVEL_ERROR, "flash_attention_simple_forward invalid device type");
+				exit(1);
+			}
+			});
+
+		if (Inferno::grad_enabled && qkv.requires_grad()) {
+			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "FlashAttention - Making a FlashAttentionBackward node");
+			//GetImpl(out)->gradfn() = std::make_shared<FlashAttentionBackward>(Q, K, V, out, causal);
+		}
+
+
+		return out;
+	}*/
+
+	Tensor flash_attention_bigdaddy_forward(const Tensor& qkv, size_t num_heads, bool causal) {
+
+		std::vector<size_t> shape = qkv.shape();
+
+		if (shape.size() != 3) {
+			INFERNO_LOG_ERROR() << "flash_attention_bigdaddy_forward expects qkv shape [B,T,3C]" << std::endl;
+			exit(1);
+		}
+
+		if (!qkv.is_contiguous()) {
+			INFERNO_LOG_ERROR() << "flash_attention_bigdaddy_forward expects qkv to be contiguous" << std::endl;
+			exit(1);
+		}
+
+		size_t B = shape[0];
+		size_t Tseq = shape[1];
+		size_t threeC = shape[2];
+
+		if (threeC % 3 != 0) {
+			INFERNO_LOG_ERROR() << "flash_attention_bigdaddy_forward last dim must be 3*C" << std::endl;
+			exit(1);
+		}
+
+		size_t C = threeC / 3;
+
+		if (C % num_heads != 0) {
+			INFERNO_LOG_ERROR() << "flash_attention_bigdaddy_forward C must be divisible by num_heads" << std::endl;
+			exit(1);
+		}
+
+		size_t H = num_heads;
+		size_t D = C / H;
+
+		Tensor out(qkv.dtype(), { B, Tseq, C }, "flash_attention_bigdaddy_out", qkv.device());
+
+		dispatchFloat(qkv.dtype(), [&](auto TagA) {
+			using AT = typename decltype(TagA)::type;
+
+			const AT* qkvptr = GetImpl(qkv)->data_as_ptr<AT>();
+			AT* outptr = GetImpl(out)->data_as_ptr<AT>();
+
+			switch (qkv.device().m_type) {
+			case DeviceType::CUDA:
+				cuda_flash_block<AT>(
+					qkvptr,
+					outptr,
+					B,
+					Tseq,
+					C,
+					H,
+					D,
+					causal
+				);
+				break;
+
+			default:
+				INFERNO_LOG_ERROR() << "flash_attention_bigdaddy_forward only supports CUDA for now" << std::endl;
+				exit(1);
+			}
+			});
+
+		if (Inferno::grad_enabled && qkv.requires_grad()) {
+			INFERNO_LOG_DEBUG() << "FlashAttentionBigDaddy - Making backward node" << std::endl;
+
+			// You will need a new backward node for this packed version.
+			GetImpl(out)->gradfn() = std::make_shared<FlashAttentionBigDaddyBackwardFast>(qkv, out, num_heads, causal);
+
+			out.set_requires_grad(true);
+		}
+
+		return out;
 	}
 
 }

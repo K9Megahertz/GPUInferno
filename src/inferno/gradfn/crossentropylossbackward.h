@@ -58,8 +58,7 @@ namespace Inferno {
             int target_id = targets[r];
 
             if (target_id < 0 || static_cast<size_t>(target_id) >= vocab_size) {
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                    "Target index out of bounds in cpu_cross_entropy_loss_backward");
+                INFERNO_LOG_ERROR() << "Target index out of bounds in cpu_cross_entropy_loss_backward";
                 exit(1);
             }
 

@@ -1,5 +1,5 @@
 #include <inferno/modules/linear.h>
-#include "inferno/util/logger.h"
+#include <inferno/util/logging_internal.h>
 #include "inferno/core/dtype_dispatch.h"
 
 namespace Inferno {
@@ -42,8 +42,8 @@ namespace Inferno {
 			else if constexpr (std::is_same_v<RT, double>) {
 				weight_data = Inferno::RandomGenerator::generateRandomDoubleVector(count, lowrange, highrange);
 			}			
-			else {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Unsupported dtype in Linear");
+			else {				
+				INFERNO_LOG_ERROR() << "Unsupported dtype in Linear" << std::endl;
 				std::exit(1);
 			}
 
@@ -62,7 +62,8 @@ namespace Inferno {
 				bias_data = Inferno::RandomGenerator::generateRandomDoubleVector(out_features, lowrange, highrange);
 			}			
 			else {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Unsupported dtype in Linear");
+				//Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Unsupported dtype in Linear");
+				INFERNO_LOG_ERROR() << "Unsupported dtype in Linear" << std::endl;
 				std::exit(1);
 			}
 

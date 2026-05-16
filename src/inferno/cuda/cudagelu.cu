@@ -255,13 +255,14 @@ namespace Inferno {
 		size_t* d_astrides = nullptr;
 		size_t* d_ostrides = nullptr;
 
-		cudaMalloc(&d_shape, ndim * sizeof(size_t));
-		cudaMalloc(&d_astrides, ndim * sizeof(size_t));
-		cudaMalloc(&d_ostrides, ndim * sizeof(size_t));
-
-		cudaMemcpy(d_shape, shape.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_astrides, astrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_ostrides, ostrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
+		
+		check_cuda(cudaMalloc(&d_shape, ndim * sizeof(size_t)), "cuda_gelu_strided failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_astrides, ndim * sizeof(size_t)), "cuda_gelu_strided failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_ostrides, ndim * sizeof(size_t)), "cuda_gelu_strided failed to cudaMalloc");
+		
+		check_cuda(cudaMemcpy(d_shape, shape.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_gelu_strided failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_astrides, astrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_gelu_strided failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_ostrides, ostrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_gelu_strided failed to cudaMemcpy");
 
 		constexpr int threads = 256;
 		int blocks = static_cast<int>((N + threads - 1) / threads);
@@ -282,10 +283,10 @@ namespace Inferno {
 		if (err != cudaSuccess) {
 			std::printf("cuda_gelu_strided launch failed: %s\n", cudaGetErrorString(err));
 		}
-
-		cudaFree(d_shape);
-		cudaFree(d_astrides);
-		cudaFree(d_ostrides);
+		
+		check_cuda(cudaFree(d_shape), "cuda_gelu_strided failed to cudaFree");		
+		check_cuda(cudaFree(d_astrides), "cuda_gelu_strided failed to cudaFree");		
+		check_cuda(cudaFree(d_ostrides), "cuda_gelu_strided failed to cudaFree");
 	}
 
 

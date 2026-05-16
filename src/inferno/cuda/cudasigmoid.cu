@@ -113,18 +113,16 @@ namespace Inferno {
         cudaError_t err = cudaGetLastError();
         if (err != cudaSuccess)
         {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                std::string("sigmoid_backward_kernel launch failed: ") + cudaGetErrorString(err));
+            INFERNO_LOG_ERROR() << std::string("sigmoid_backward_kernel launch failed: ") + cudaGetErrorString(err) << std::endl;
             exit(1);
         }
 
-        cudaDeviceSynchronize();
+        //cudaDeviceSynchronize();
 
         err = cudaGetLastError();
         if (err != cudaSuccess)
         {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                std::string("sigmoid_backward_kernel execution failed: ") + cudaGetErrorString(err));
+            INFERNO_LOG_ERROR() << std::string("sigmoid_backward_kernel execution failed: ") + cudaGetErrorString(err) << std::endl;
             exit(1);
         }
     }

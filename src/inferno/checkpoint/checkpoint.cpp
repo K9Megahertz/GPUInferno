@@ -1,7 +1,7 @@
 #include <fstream>
 #include "inferno/core/tensorimpl.h"
 #include <inferno/checkpoint/checkpoint.h>
-#include <inferno/util/logger.h>
+#include <inferno/util/logging.h>
 
 namespace Inferno {
 
@@ -84,7 +84,7 @@ namespace Inferno {
         std::ofstream out(filename, std::ios::binary);
 
         if (!out) {            
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Failed to open file: " + filename);
+            INFERNO_LOG_ERROR() << "Failed to open file: " << filename;
             exit(1);
         }
 
@@ -103,7 +103,7 @@ namespace Inferno {
         out.write(reinterpret_cast<const char*>(&header), sizeof(header));
 
         if (!out) {            
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Failed while writing checkpoint header");
+            INFERNO_LOG_ERROR() << "Failed while writing checkpoint header";
             exit(1);
         }
 
@@ -119,7 +119,7 @@ namespace Inferno {
         out.write(reinterpret_cast<const char*>(&metadata), sizeof(metadata));
 
         if (!out) {            
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Failed while writing training metadata");
+            INFERNO_LOG_ERROR() << "Failed while writing training metadata";
             exit(1);
         }
 
@@ -148,7 +148,7 @@ namespace Inferno {
         out.write(reinterpret_cast<const char*>(&opt_meta), sizeof(opt_meta));
 
         if (!out) {            
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Failed while writing optimizer metadata");
+            INFERNO_LOG_ERROR() << "Failed while writing optimizer metadata";
             exit(1);
         }
 
@@ -164,7 +164,7 @@ namespace Inferno {
             //DIFNT?
             if (!t.is_contiguous()) {
                 // t = contiguous(t);                
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Cannot save non-contiguous tensor yet: " + name);
+                INFERNO_LOG_ERROR() << "Cannot save non-contiguous tensor yet: " << name;
                 exit(1);
             }
 
@@ -194,7 +194,7 @@ namespace Inferno {
             out.write(reinterpret_cast<const char*>(GetImpl(t)->raw_ptr()), trh.nbytes);
 
             if (!out) {                
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Failed while writing tensor: " + name);
+                INFERNO_LOG_ERROR() << "Failed while writing tensor: " << name;
                 exit(1);
             }
         };

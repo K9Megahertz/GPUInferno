@@ -529,8 +529,7 @@ namespace Inferno {
 
 		// Cannot broadcast to fewer dimensions
 		if (new_rank < old_rank) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-				"broadcast_to: cannot broadcast to fewer dimensions");
+			INFERNO_LOG_ERROR() << "broadcast_to: cannot broadcast to fewer dimensions" << std::endl;
 			exit(1);
 		}
 
@@ -565,8 +564,7 @@ namespace Inferno {
 				newstrides[new_dim] = 0;
 			}
 			else {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-					"broadcast_to: shape is not broadcastable to desired shape");
+				INFERNO_LOG_ERROR() << "broadcast_to: shape is not broadcastable to desired shape" << std::endl;
 				exit(1);
 			}
 		}
@@ -639,6 +637,9 @@ namespace Inferno {
 		out_impl->set_is_view(src_impl->is_view());
 		out_impl->name() = src_impl->name();
 		out_impl->id() = Inferno::IDBroker::GenID();
+
+
+		
 		
 
 		//size_t bytes = m_impl->nbytes();
@@ -651,8 +652,7 @@ namespace Inferno {
 			out_impl->data() = std::make_shared<CUDAStorage>(bytes);
 		}
 		else {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-				"Attempt to create TensorImpl with unknown device type.");
+			INFERNO_LOG_ERROR() << "Attempt to create TensorImpl with unknown device type." << std::endl;
 			exit(1);
 		}		
 
@@ -672,7 +672,7 @@ namespace Inferno {
 			memcpy(dst_ptr, src_ptr, bytes);
 		}
 		else {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,"Attempt to copy data failed.");
+			INFERNO_LOG_ERROR() << "Attempt to copy data failed." << std::endl;
 			exit(1);
 		}
 
@@ -739,7 +739,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal ones_like path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal ones_like path" << std::endl;
 				for (size_t i = 0; i < n; i++)
 					ptr[i] = static_cast<AT>(1);
 				break;
@@ -748,12 +748,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal ones_like path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal ones_like path" << std::endl;
 				cuda_fill<AT>(ptr, 1, n);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
@@ -790,7 +790,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal zeros_like path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal zeros_like path" << std::endl;
 				for (size_t i = 0; i < n; i++)
 					ptr[i] = static_cast<AT>(0);
 				break;
@@ -799,12 +799,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal zeros_like path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal zeros_like path" << std::endl;
 				cuda_fill<AT>(ptr, 0, n);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_INFO, "Invalid device type");
+				INFERNO_LOG_DEBUG() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
@@ -902,7 +902,7 @@ namespace Inferno {
 		Tensor out = transpose_impl(*this, dima, dimb);
 
 		if (grad_enabled && (*this).requires_grad()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Transpose - Making a TransposeBackward node");
+			INFERNO_LOG_DEBUG() << "Transpose - Making a TransposeBackward node" << std::endl;
 			GetImpl(out)->gradfn() = std::make_shared<TransposeBackward>(*this, dima, dimb);
 		}
 
@@ -915,7 +915,7 @@ namespace Inferno {
 		Tensor out = transpose_impl(*this, dima, dimb);
 
 		if (grad_enabled && (*this).requires_grad()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Transpose - Making a TransposeBackward node");
+			INFERNO_LOG_DEBUG() << "Transpose - Making a TransposeBackward node" << std::endl;
 			GetImpl(out)->gradfn() = std::make_shared<TransposeBackward>(*this, dima, dimb);
 		}
 
@@ -977,7 +977,7 @@ namespace Inferno {
 
 	Tensor Tensor::reshape(const std::vector<size_t>& newshape) const {
 		if (!is_contiguous()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "reshape only supported on contiguous tensors");
+			INFERNO_LOG_ERROR() << "reshape only supported on contiguous tensors" << std::endl;
 			exit(1);
 		}
 
@@ -985,8 +985,7 @@ namespace Inferno {
 		size_t new_numel = std::accumulate(newshape.begin(), newshape.end(), size_t{ 1 }, std::multiplies<size_t>());
 
 		if (old_numel != new_numel) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-				"reshape: new shape has different number of elements");
+			INFERNO_LOG_ERROR() << "reshape: new shape has different number of elements" << std::endl;
 			exit(1);
 		}
 
@@ -1076,7 +1075,7 @@ namespace Inferno {
 				device);
 
 		default:
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Unsupported dtype in randn");
+			INFERNO_LOG_ERROR() << "Unsupported dtype in randn" << std::endl;
 			exit(1);
 		}
 	}
@@ -1127,6 +1126,9 @@ namespace Inferno {
 	}
 
 
+
+
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -1155,7 +1157,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal ones path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal ones path" << std::endl;
 				for (size_t i = 0; i < numel; i++)
 					optr[i] = static_cast<AT>(1);
 				break;
@@ -1164,12 +1166,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal ones path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal ones path" << std::endl;
 				cuda_fill<AT>(optr, static_cast<AT>(1), numel);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 			
@@ -1206,7 +1208,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal ones path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal ones path" << std::endl;
 				for (size_t i = 0; i < numel; i++)
 					optr[i] = static_cast<AT>(0);
 				break;
@@ -1215,12 +1217,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal ones path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal ones path" << std::endl;
 				cuda_fill<AT>(optr, static_cast<AT>(0), numel);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
@@ -1270,11 +1272,74 @@ namespace Inferno {
 			throw std::runtime_error("copy_: unsupported device copy");
 		}
 
-		cudaError_t err = cudaMemcpy(dst, src, bytes, kind);
+		
+		check_cuda(cudaMemcpy(dst, src, bytes, kind), "Failed to memcpy in to");
 
-		if (err != cudaSuccess) {
-			throw std::runtime_error(std::string("copy_: cudaMemcpy failed: ") + cudaGetErrorString(err));
-		}
+		
 	}
+
+	Tensor Tensor::operator[](size_t index) const {
+		if (ndim() == 0) {
+			INFERNO_LOG_ERROR() << "Cannot index into a 0-dimensional tensor";
+			std::exit(1);
+		}
+
+		if (index >= shape()[0]) {
+			INFERNO_LOG_ERROR() << "Tensor index out of bounds. index="
+				<< index
+				<< ", size="
+				<< shape()[0];
+			std::exit(1);
+		}
+
+		return select(*this, 0, index);
+	}
+
+
+	template<typename T>
+	std::vector<T> tensor_to_vector_impl(const Tensor& t) {
+		if (t.dtype() != dtype_of_v<T>) {
+			throw std::runtime_error("Tensor::to_vector dtype mismatch");
+		}
+
+		Tensor cpu = t.to(Device::cpu());
+
+		if (!cpu.is_contiguous()) {
+			cpu = cpu.contiguous();
+		}
+
+		std::vector<T> out(cpu.numel());
+
+		const T* ptr = GetImpl(cpu)->data_as_ptr<T>();
+
+		std::memcpy(
+			out.data(),
+			ptr,
+			sizeof(T) * out.size()
+		);
+
+		return out;
+	}
+
+	template<>
+	std::vector<float> Tensor::to_vector<float>() const {
+		return tensor_to_vector_impl<float>(*this);
+	}
+
+	template<>
+	std::vector<double> Tensor::to_vector<double>() const {
+		return tensor_to_vector_impl<double>(*this);
+	}
+
+	template<>
+	std::vector<int> Tensor::to_vector<int>() const {
+		return tensor_to_vector_impl<int>(*this);
+	}
+
+	/*template<>
+	std::vector<uint32_t> Tensor::to_vector<uint32_t>() const {
+		return tensor_to_vector_impl<uint32_t>(*this);
+	}*/
+	
 	
 }

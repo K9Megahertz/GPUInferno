@@ -20,6 +20,7 @@ namespace Inferno {
 
     CrossEntropyLossBackward::CrossEntropyLossBackward(const Tensor& logits, const Tensor& target)
         : m_logits(logits), m_target(target) {
+        set_name("CrossEntropyBackward");
     }
 
 
@@ -36,8 +37,7 @@ namespace Inferno {
 
 
     void CrossEntropyLossBackward::backward() {
-        Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG,
-            "CrossEntropyLossBackward::backward");
+        INFERNO_LOG_DEBUG() << "CrossEntropyLossBackward::backward" << std::endl;
 
         Tensor g_out = Engine::grad_in(this, 0);
 
@@ -48,20 +48,17 @@ namespace Inferno {
         }*/
 
         if (m_target.dtype() != DType::Int32) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "CrossEntropyLossBackward requires Int32 targets");
+            INFERNO_LOG_ERROR() << "CrossEntropyLossBackward requires Int32 targets" << std::endl;
             exit(1);
         }
 
         if (!m_logits.is_contiguous()) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "CrossEntropyLossBackward currently requires contiguous logits");
+            INFERNO_LOG_ERROR() << "CrossEntropyLossBackward currently requires contiguous logits" << std::endl;
             exit(1);
         }
 
         if (!m_target.is_contiguous()) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "CrossEntropyLossBackward currently requires contiguous target");
+            INFERNO_LOG_ERROR() << "CrossEntropyLossBackward currently requires contiguous target" << std::endl;
             exit(1);
         }
 
@@ -88,8 +85,7 @@ namespace Inferno {
 
             switch (m_logits.device().m_type) {
             case DeviceType::CPU:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG,
-                    "CPU Code path - Using normal cross_entropy_loss_backward path");
+                INFERNO_LOG_DEBUG() << "CPU Code path - Using normal cross_entropy_loss_backward path" << std::endl;
                 cpu_cross_entropy_loss_backward(
                     lptr,
                     tptr,
@@ -101,9 +97,8 @@ namespace Inferno {
                 break;
 
             case DeviceType::CUDA:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG,
-                    "CUDA Code path - Using normal cross_entropy_loss_backward path");
-                cuda_cross_entropy_loss_backward(
+                INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal cross_entropy_loss_backward path" << std::endl;
+                cuda_cross_entropy_loss_backward_fast(
                     lptr,
                     tptr,
                     gptr,
@@ -114,11 +109,13 @@ namespace Inferno {
                 break;
 
             default:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+                INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
                 exit(1);
             }
 
             Engine::accumulate(GetImpl(m_logits)->grad_edge().get(), 0, grad_logits);
+            //std::cout << "grad_logits" << std::endl;
+            //std::cout << grad_logits << std::endl;
             });
     }
 

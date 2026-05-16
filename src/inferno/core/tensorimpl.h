@@ -9,7 +9,8 @@
 #include "inferno/storage/storage.h"
 #include "inferno/storage/cpustorage.h"
 #include "inferno/storage/cudastorage.h"
-#include "inferno/util/logger.h"
+#include <inferno/util/logging.h>
+#include <inferno/util/logging_internal.h>
 #include "inferno/util/idbroker.h"
 #include "inferno/util/nodetracker.h"
 

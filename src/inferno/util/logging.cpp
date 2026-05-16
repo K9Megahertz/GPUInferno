@@ -1,0 +1,44 @@
+#include <inferno/util/logging.h>
+
+namespace Inferno {
+
+    bool Logger::s_enabled = false;
+
+    Logger::LogLevel Logger::s_level =
+        Logger::LogLevel::LOGLEVEL_INFO;
+
+    CoreLogger::Logger* Logger::s_logger = nullptr;
+
+    void Logger::SetLogger(CoreLogger::Logger* logger) {
+        s_logger = logger;
+
+        if (s_logger) {
+            s_logger->SetLevel(s_level);
+        }
+    }
+
+    void Logger::EnableLogging() {
+        s_enabled = true;
+    }
+
+    void Logger::DisableLogging() {
+        s_enabled = false;
+    }
+
+    /*void Logger::SetLevel(LogLevel level) {
+        s_level = level;
+
+        if (s_logger) {
+            s_logger->SetLevel(level);
+        }
+    }*/
+
+    CoreLogger::StreamLogger Append(Logger::LogLevel level) {
+        if (Logger::s_enabled && Logger::s_logger) {
+            return Logger::s_logger->Append(level);
+        }
+
+        return CoreLogger::StreamLogger(nullptr, level, false);
+    }
+
+}

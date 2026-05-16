@@ -8,7 +8,7 @@ namespace Inferno {
 	std::shared_ptr<TensorImpl> GetImpl(const Tensor& t);
 
 
-	Tensor matmul_impl(const Tensor& A, const Tensor& B, std::string label = "Unlabeled");
+	Tensor matmul_impl(const Tensor& A, const Tensor& B, std::string label, bool transA, bool transB);
 	Tensor transpose_impl(const Tensor& A, int dima, int dimb);
 	Tensor reshape_impl(const Tensor& A, const std::vector<size_t>& newshape);	
 	Tensor contiguous_impl(const Tensor& A);	

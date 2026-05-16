@@ -65,7 +65,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal gelu backward path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal gelu backward path";
 				cpu_gelu_backward<AT,GT,RT>(aptr, gptr, optr, N, off);
 				break;
 
@@ -73,12 +73,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal gelu backward path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal gelu backward path";
 				cuda_gelu_backward<AT, GT, RT>(aptr, gptr, optr, N, off);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type";
 				exit(1);
 			}
 

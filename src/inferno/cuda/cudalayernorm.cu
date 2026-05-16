@@ -293,7 +293,7 @@ namespace Inferno {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    template<typename AT>
+    /*template<typename AT>
     __global__ void layernorm_param_grad_kernel(
         const AT* __restrict__ aptr,
         const AT* __restrict__ goutptr,
@@ -327,6 +327,68 @@ namespace Inferno {
 
         ggptr[i] = ggamma;
         gbptr[i] = gbeta;
+    }*/
+
+
+    template<typename AT>
+    __global__ void layernorm_param_grad_kernel(
+        const AT* __restrict__ aptr,
+        const AT* __restrict__ goutptr,
+        const float* __restrict__ meanptr,
+        const float* __restrict__ invstdptr,
+        float* __restrict__ ggptr,
+        float* __restrict__ gbptr,
+        size_t num_batches,
+        size_t dim
+    ) {
+        const size_t i = static_cast<size_t>(blockIdx.x); // feature index
+        const size_t tid = static_cast<size_t>(threadIdx.x);
+
+        if (i >= dim) {
+            return;
+        }
+
+        extern __shared__ float sdata[];
+
+        float* s_gamma = sdata;
+        float* s_beta = sdata + blockDim.x;
+
+        float local_gamma = 0.0f;
+        float local_beta = 0.0f;
+
+        for (size_t b = tid; b < num_batches; b += blockDim.x) {
+            const size_t idx = b * dim + i;
+
+            const float x = static_cast<float>(aptr[idx]);
+            const float gout = static_cast<float>(goutptr[idx]);
+
+            const float mean = meanptr[b];
+            const float invstd = invstdptr[b];
+
+            const float xhat = (x - mean) * invstd;
+
+            local_beta += gout;
+            local_gamma += gout * xhat;
+        }
+
+        s_gamma[tid] = local_gamma;
+        s_beta[tid] = local_beta;
+
+        __syncthreads();
+
+        for (unsigned int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+            if (tid < stride) {
+                s_gamma[tid] += s_gamma[tid + stride];
+                s_beta[tid] += s_beta[tid + stride];
+            }
+
+            __syncthreads();
+        }
+
+        if (tid == 0) {
+            ggptr[i] = s_gamma[0];
+            gbptr[i] = s_beta[0];
+        }
     }
 
 
@@ -384,10 +446,26 @@ namespace Inferno {
         // -----------------------------------------------
         // Kernel 2: gamma and beta gradients
         // -----------------------------------------------
-        const int threads_p = 256;
+        /*const int threads_p = 256;
         const int blocks_p = static_cast<int>((dim + threads_p - 1) / threads_p);
 
         layernorm_param_grad_kernel<AT> << <blocks_p, threads_p >> > (
+            aptr,
+            goutptr,
+            meanptr,
+            invstdptr,
+            ggptr,
+            gbptr,
+            num_batches,
+            dim
+            );*/
+
+        const int threads_p = 256;
+        const int blocks_p = static_cast<int>(dim);
+
+        size_t param_shmem_bytes = 2 * threads_p * sizeof(float);
+
+        layernorm_param_grad_kernel<AT> << <blocks_p, threads_p, param_shmem_bytes >> > (
             aptr,
             goutptr,
             meanptr,
@@ -435,20 +513,6 @@ namespace Inferno {
         size_t num_batches,
         size_t dim
     );
-
-    template void cuda_layernorm_backward<int, float>(
-        const int* aptr,
-        const int* goutptr,
-        const float* gptr,
-        const float* meanptr,
-        const float* invstdptr,
-        float* gaptr,
-        float* ggptr,
-        float* gbptr,
-        size_t num_batches,
-        size_t dim
-    );
-
 
 
 }

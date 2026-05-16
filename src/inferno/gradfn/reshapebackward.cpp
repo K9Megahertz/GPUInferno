@@ -35,13 +35,14 @@ namespace Inferno {
 	void ReshapeBackward::backward() {
 		NoGradGuard guard;
 
-		// upstream gradient dL/d(out)
-		Tensor g_out = Engine::grad_in(this, 0);
+		Tensor g = Engine::grad_in(this, 0);
 
-		// reshape grad back to original input shape
-		Tensor g_a = g_out.reshape(m_A.shape());
+		if (!g.is_contiguous()) {
+			g = g.contiguous();
+		}
 
-		// send gradient upstream
+		Tensor g_a = g.reshape(m_A.shape());
+
 		auto na = GetImpl(m_A)->grad_edge();
 		if (na) {
 			Engine::accumulate(na.get(), 0, g_a);

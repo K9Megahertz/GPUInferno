@@ -37,7 +37,9 @@ namespace Inferno {
         size_t M,
         size_t K,
         size_t N,
-        size_t total_batches)
+        size_t total_batches,
+        bool transA,
+        bool transB)
     {
 
         //every thread will get its position in the final matrix. 
@@ -126,15 +128,16 @@ namespace Inferno {
         const std::vector<size_t>& a_strides,
         const std::vector<size_t>& b_shape,
         const std::vector<size_t>& b_strides,
-        const std::vector<size_t>& out_shape)
+        const std::vector<size_t>& out_shape,
+        bool transA,
+        bool transB)
     {
         const size_t a_rank = a_shape.size();
         const size_t b_rank = b_shape.size();
         const size_t out_rank = out_shape.size();
 
         if (a_rank < 2 || b_rank < 2 || out_rank < 2) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_matmul requires rank >= 2 tensors");
+            INFERNO_LOG_ERROR() << "cuda_matmul requires rank >= 2 tensors" << std::endl;
             exit(1);
         }
 
@@ -150,8 +153,7 @@ namespace Inferno {
         const size_t batch_rank = out_batch_shape.size();
 
         if (batch_rank > MAX_DIMS) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_matmul: batch rank exceeds MAX_DIMS");
+            INFERNO_LOG_ERROR() << "cuda_matmul: batch rank exceeds MAX_DIMS" << std::endl;
             exit(1);
         }
            
@@ -200,9 +202,12 @@ namespace Inferno {
             M,
             K,
             N,
-            total_batches
+            total_batches,
+            transA,
+            transB
             );
 
+        //CUDA_CHECK_SYNC("matmul");
         check_cuda(cudaGetLastError(), "cuda_matmul kernel launch failed");
         //check_cuda(cudaDeviceSynchronize(), "cuda_matmul kernel execution failed");
 
@@ -235,7 +240,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<float, float, float>(
         const float*,
@@ -245,7 +252,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<double, double, double>(
         const double*,
@@ -255,7 +264,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<int, float, float>(
         const int*,
@@ -265,7 +276,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<float, int, float>(
         const float*,
@@ -275,7 +288,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<int, double, double>(
         const int*,
@@ -285,7 +300,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<double, int, double>(
         const double*,
@@ -295,7 +312,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<float, double, double>(
         const float*,
@@ -305,7 +324,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul<double, float, double>(
         const double*,
@@ -315,7 +336,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
 
 
@@ -351,7 +374,9 @@ namespace Inferno {
         size_t M,
         size_t K,
         size_t N,
-        size_t total_batches)
+        size_t total_batches,
+        bool transA,
+        bool transB)
     {
         __shared__ RT As[TILE][TILE];
         __shared__ RT Bs[TILE][TILE];
@@ -504,15 +529,16 @@ namespace Inferno {
         const std::vector<size_t>& a_strides,
         const std::vector<size_t>& b_shape,
         const std::vector<size_t>& b_strides,
-        const std::vector<size_t>& out_shape)
+        const std::vector<size_t>& out_shape,
+        bool transA,
+        bool transB)
     {
         const size_t a_rank = a_shape.size();
         const size_t b_rank = b_shape.size();
         const size_t out_rank = out_shape.size();
 
         if (a_rank < 2 || b_rank < 2 || out_rank < 2) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_matmul_fast requires rank >= 2 tensors");
+            INFERNO_LOG_ERROR() << "cuda_matmul_fast requires rank >= 2 tensors" << std::endl;
             exit(1);
         }
 
@@ -527,20 +553,20 @@ namespace Inferno {
         const size_t batch_rank = out_batch_shape.size();
 
         if (batch_rank > MAX_DIMS) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_matmul_fast: batch rank exceeds MAX_DIMS");
+            INFERNO_LOG_ERROR() << "cuda_matmul_fast: batch rank exceeds MAX_DIMS" << std::endl;
             exit(1);
         }
 
         // If layout is irregular, use your original implementation.
         if (!can_use_tiled_fast_path(a_shape, a_strides, b_shape, b_strides, out_shape)) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG,
-                "cuda_matmul_fast falling back to cuda_matmul");
+            INFERNO_LOG_DEBUG() << "cuda_matmul_fast falling back to cuda_matmul" << std::endl;
             cuda_matmul<AT, BT, RT>(
                 aptr, bptr, outptr,
                 a_shape, a_strides,
                 b_shape, b_strides,
-                out_shape
+                out_shape,
+                transA,
+                transB
             );
             return;
         }
@@ -608,7 +634,9 @@ namespace Inferno {
             M,
             K,
             N,
-            total_batches
+            total_batches,
+            transA,
+            transB
             );
 
         check_cuda(cudaGetLastError(), "cuda_matmul_fast kernel launch failed");
@@ -638,7 +666,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<float, float, float>(
         const float*,
@@ -648,7 +678,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<double, double, double>(
         const double*,
@@ -658,7 +690,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<int, float, float>(
         const int*,
@@ -668,7 +702,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<float, int, float>(
         const float*,
@@ -678,7 +714,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<int, double, double>(
         const int*,
@@ -688,7 +726,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<double, int, double>(
         const double*,
@@ -698,7 +738,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<float, double, double>(
         const float*,
@@ -708,7 +750,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
     template void cuda_matmul_fast<double, float, double>(
         const double*,
@@ -718,7 +762,9 @@ namespace Inferno {
         const std::vector<size_t>&,
         const std::vector<size_t>&,
         const std::vector<size_t>&,
-        const std::vector<size_t>&);
+        const std::vector<size_t>&,
+        bool,
+        bool);
 
 
 
@@ -819,8 +865,7 @@ namespace Inferno {
         const size_t out_rank = out_shape.size();
 
         if (a_rank < 2 || b_rank < 2 || out_rank < 2) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_matmul_fast requires rank >= 2 tensors");
+            INFERNO_LOG_ERROR() << "cuda_matmul_fast requires rank >= 2 tensors" << std::endl;
             exit(1);
         }
 
@@ -829,8 +874,7 @@ namespace Inferno {
         const size_t N = b_shape[b_rank - 1];
 
         if (b_shape[b_rank - 2] != K) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_matmul_fast incompatible dimensions for matrix multiplication");
+            INFERNO_LOG_ERROR() << "cuda_matmul_fast incompatible dimensions for matrix multiplication" << std::endl;
             exit(1);
         }
 
@@ -966,8 +1010,7 @@ namespace Inferno {
     void cublas_mm(const AT* aptr, const BT* bptr, RT* optr,
         size_t M, size_t K, size_t N)
     {
-        cublasHandle_t handle;
-        check_cublas(cublasCreate(&handle), "Error: Could not create cublas handle");
+        auto handle = get_cublas_handle();
 
         if constexpr (std::is_same_v<AT, float> &&
             std::is_same_v<BT, float> &&
@@ -1014,19 +1057,14 @@ namespace Inferno {
             );
         }
 
-        check_cublas(cublasDestroy(handle), "Error: Failed to destroy handle");
+        //check_cublas(cublasDestroy(handle), "Error: Failed to destroy handle");
     }
 
-
-    //template void cublas_mm<int, int, int>(const int*, const int*, int*, size_t, size_t, size_t);
-    //template void cublas_mm<int, float, float>(const int*, const float*, float*, size_t, size_t, size_t);
-    //template void cublas_mm<int, double, double>(const int*, const double*, double*, size_t, size_t, size_t);
-
-    //template void cublas_mm<float, int, float>(const float*, const int*, float*, size_t, size_t, size_t);
+   
     template void cublas_mm<float, float, float>(const float*, const float*, float*, size_t, size_t, size_t);
     template void cublas_mm<float, double, double>(const float*, const double*, double*, size_t, size_t, size_t);
 
-    //template void cublas_mm<double, int, double>(const double*, const int*, double*, size_t, size_t, size_t);
+    
     template void cublas_mm<double, float, double>(const double*, const float*, double*, size_t, size_t, size_t);
     template void cublas_mm<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t);
 
@@ -1056,56 +1094,65 @@ namespace Inferno {
 
 
     template <typename AT, typename BT, typename RT>
-    void cublas_mm_row_major(const AT* aptr, const BT* bptr, RT* optr,
-        size_t M, size_t K, size_t N)
-    {
+    void cublas_mm_row_major(const AT* aptr, const BT* bptr, RT* optr, size_t M, size_t K, size_t N, bool transA, bool transB) {
+
         auto handle = get_cublas_handle();
 
-        if constexpr (std::is_same_v<AT, float> &&
-            std::is_same_v<BT, float> &&
-            std::is_same_v<RT, float>)
-        {
+
+        cublasOperation_t opB = transB ? CUBLAS_OP_T : CUBLAS_OP_N;
+        cublasOperation_t opA = transA ? CUBLAS_OP_T : CUBLAS_OP_N;
+
+        // physical row-major cols
+        int ldaB = static_cast<int>(transB ? K : N);
+        int ldaA = static_cast<int>(transA ? M : K);
+
+        //are they all floats?
+        if constexpr (std::is_same_v<AT, float> && std::is_same_v<BT, float> && std::is_same_v<RT, float>) {
+
+
             const float alpha = 1.0f;
             const float beta = 0.0f;
 
             check_cublas(
                 cublasSgemm(
                     handle,
-                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    opB,
+                    opA,
                     static_cast<int>(N),   // swapped for row-major
                     static_cast<int>(M),
                     static_cast<int>(K),
                     &alpha,
-                    bptr, static_cast<int>(N),
-                    aptr, static_cast<int>(K),
+                    bptr, ldaB,
+                    aptr, ldaA,
                     &beta,
                     optr, static_cast<int>(N)
                 ),
                 "cublasSgemm failed"
             );
+            //CUDA_CHECK_SYNC("cublasSgemm in row major");
         }
-        else if constexpr (std::is_same_v<AT, double> &&
-            std::is_same_v<BT, double> &&
-            std::is_same_v<RT, double>)
-        {
+        else if constexpr (std::is_same_v<AT, double> && std::is_same_v<BT, double> && std::is_same_v<RT, double>) {
+
             const double alpha = 1.0;
             const double beta = 0.0;
 
             check_cublas(
                 cublasDgemm(
                     handle,
-                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    opB,
+                    opA,
                     static_cast<int>(N),   // swapped for row-major
                     static_cast<int>(M),
                     static_cast<int>(K),
                     &alpha,
-                    bptr, static_cast<int>(N),
-                    aptr, static_cast<int>(K),
+                    bptr, ldaB,
+                    aptr, ldaA,
                     &beta,
                     optr, static_cast<int>(N)
                 ),
                 "cublasDgemm failed"
             );
+            //CUDA_CHECK_SYNC("cublasDgemm");
         }
 
         //check_cuda(cudaDeviceSynchronize(), "cublas_mm_row_major sync failed");
@@ -1122,57 +1169,67 @@ namespace Inferno {
         long long strideA,
         long long strideB,
         long long strideC,
-        int batch_count)
+        int batch_count,
+        bool transA,
+        bool transB)
     {
+
+        cublasOperation_t opB = transB ? CUBLAS_OP_T : CUBLAS_OP_N;
+        cublasOperation_t opA = transA ? CUBLAS_OP_T : CUBLAS_OP_N;
+
+        // physical row-major cols
+        int ldaB = static_cast<int>(transB ? K : N);
+        int ldaA = static_cast<int>(transA ? M : K);
+
         auto handle = get_cublas_handle();
 
-        if constexpr (std::is_same_v<AT, float> &&
-            std::is_same_v<BT, float> &&
-            std::is_same_v<RT, float>)
-        {
+        if constexpr (std::is_same_v<AT, float> && std::is_same_v<BT, float> && std::is_same_v<RT, float>) {
+
             const float alpha = 1.0f;
             const float beta = 0.0f;
 
             check_cublas(
                 cublasSgemmStridedBatched(
                     handle,
-                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    opB,
+                    opA,
                     static_cast<int>(N),   // swapped for row-major
                     static_cast<int>(M),
                     static_cast<int>(K),
                     &alpha,
-                    bptr, static_cast<int>(N), strideB,
-                    aptr, static_cast<int>(K), strideA,
+                    bptr, ldaB, strideB,
+                    aptr, ldaA, strideA,
                     &beta,
                     optr, static_cast<int>(N), strideC,
                     batch_count
                 ),
                 "cublasSgemmStridedBatched failed"
             );
+            //CUDA_CHECK_SYNC("cublasSgemmStridedBatched");
         }
-        else if constexpr (std::is_same_v<AT, double> &&
-            std::is_same_v<BT, double> &&
-            std::is_same_v<RT, double>)
-        {
+        else if constexpr (std::is_same_v<AT, double> && std::is_same_v<BT, double> && std::is_same_v<RT, double>) {
+
             const double alpha = 1.0;
             const double beta = 0.0;
 
             check_cublas(
                 cublasDgemmStridedBatched(
                     handle,
-                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    opB,
+                    opA,
                     static_cast<int>(N),   // swapped for row-major
                     static_cast<int>(M),
                     static_cast<int>(K),
                     &alpha,
-                    bptr, static_cast<int>(N), strideB,
-                    aptr, static_cast<int>(K), strideA,
+                    bptr, ldaB, strideB,
+                    aptr, ldaA, strideA,
                     &beta,
                     optr, static_cast<int>(N), strideC,
                     batch_count
                 ),
                 "cublasDgemmStridedBatched failed"
             );
+            //CUDA_CHECK_SYNC("cublasDgemmStridedBatched");
         }
 
         //check_cuda(cudaDeviceSynchronize(), "cublas_mm_strided_batched_row_major sync failed");
@@ -1203,11 +1260,237 @@ namespace Inferno {
     }
 
 
-    template void cublas_mm_strided_batched_row_major<float, float, float>(const float*, const float*, float*, size_t, size_t, size_t, long long, long long, long long, int );
-    template void cublas_mm_strided_batched_row_major<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t, long long, long long, long long, int);
+    template void cublas_mm_strided_batched_row_major<float, float, float>(const float*, const float*, float*, size_t, size_t, size_t, long long, long long, long long, int, bool, bool );
+    template void cublas_mm_strided_batched_row_major<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t, long long, long long, long long, int, bool, bool);
 
-    template void cublas_mm_row_major<float,float,float>(const float*, const float*, float*, size_t, size_t, size_t);
-    template void cublas_mm_row_major<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t);
+    template void cublas_mm_row_major<float,float,float>(const float*, const float*, float*, size_t, size_t, size_t, bool, bool);
+    template void cublas_mm_row_major<double, double, double>(const double*, const double*, double*, size_t, size_t, size_t, bool, bool);
+
+
+
+
+
+
+    template<typename AT>
+    void cublas_mm_row_major_nt(
+        const AT* aptr,
+        const AT* bptr,
+        AT* cptr,
+        size_t M,
+        size_t K,
+        size_t N
+    ) {
+        cublasHandle_t handle = get_cublas_handle();
+
+        if constexpr (std::is_same_v<AT, float>) {
+
+            const float alpha = 1.0f;
+            const float beta = 0.0f;
+
+            // Row-major C = A @ B^T
+            //
+            // Column-major view:
+            // C_row[M,N] == C_col[N,M]
+            // C_col = B_col? @ A_col?
+            //
+            // This maps to:
+            // C^T = B @ A^T
+            //
+            // B is row-major [N,K]
+            // A is row-major [M,K]
+            //
+            // cuBLAS call:
+            // C_col[N,M] = B_col_like[N,K] * A_col_like[K,M]
+            //
+            cublasStatus_t status = cublasSgemm(
+                handle,
+                CUBLAS_OP_T,
+                CUBLAS_OP_N,
+                static_cast<int>(N),
+                static_cast<int>(M),
+                static_cast<int>(K),
+                &alpha,
+                bptr,
+                static_cast<int>(K),
+                aptr,
+                static_cast<int>(K),
+                &beta,
+                cptr,
+                static_cast<int>(N)
+            );
+
+            if (status != CUBLAS_STATUS_SUCCESS) {
+                INFERNO_LOG_ERROR() << "cublas_mm_row_major_nt cublasSgemm failed" << std::endl;
+                exit(1);
+            }
+            //CUDA_CHECK_SYNC("cublasSgemmSgemm");
+
+        }
+
+        else if constexpr (std::is_same_v<AT, double>) {
+
+            const double alpha = 1.0f;
+            const double beta = 0.0f;
+
+            // Row-major C = A @ B^T
+            //
+            // Column-major view:
+            // C_row[M,N] == C_col[N,M]
+            // C_col = B_col? @ A_col?
+            //
+            // This maps to:
+            // C^T = B @ A^T
+            //
+            // B is row-major [N,K]
+            // A is row-major [M,K]
+            //
+            // cuBLAS call:
+            // C_col[N,M] = B_col_like[N,K] * A_col_like[K,M]
+            //
+            cublasStatus_t status = cublasDgemm(
+                handle,
+                CUBLAS_OP_T,
+                CUBLAS_OP_N,
+                static_cast<int>(N),
+                static_cast<int>(M),
+                static_cast<int>(K),
+                &alpha,
+                bptr,
+                static_cast<int>(K),
+                aptr,
+                static_cast<int>(K),
+                &beta,
+                cptr,
+                static_cast<int>(N)
+            );
+
+            if (status != CUBLAS_STATUS_SUCCESS) {
+                INFERNO_LOG_ERROR() << "cublas_mm_row_major_nt cublasDgemm failed" << std::endl;
+                exit(1);
+            }
+
+        }
+
+       
+    }
+
+
+
+    template void cublas_mm_row_major_nt<float>(const float*, const float*, float*, size_t, size_t, size_t);
+    template void cublas_mm_row_major_nt<double>(const double*, const double*, double*, size_t, size_t, size_t);
+
+
+
+    template<typename AT>
+    void cublas_mm_row_major_tn(
+        const AT* aptr,
+        const AT* bptr,
+        AT* cptr,
+        size_t M,
+        size_t K,
+        size_t N
+    ) {
+        cublasHandle_t handle = get_cublas_handle();
+
+        if constexpr (std::is_same_v<AT, float>) {
+
+            const float alpha = 1.0f;
+            const float beta = 0.0f;
+
+            // Row-major C = A @ B^T
+            //
+            // Column-major view:
+            // C_row[M,N] == C_col[N,M]
+            // C_col = B_col? @ A_col?
+            //
+            // This maps to:
+            // C^T = B @ A^T
+            //
+            // B is row-major [N,K]
+            // A is row-major [M,K]
+            //
+            // cuBLAS call:
+            // C_col[N,M] = B_col_like[N,K] * A_col_like[K,M]
+            //
+            cublasStatus_t status = cublasSgemm(
+                handle,
+                CUBLAS_OP_T,
+                CUBLAS_OP_N,
+                static_cast<int>(N),
+                static_cast<int>(M),
+                static_cast<int>(K),
+                &alpha,
+                bptr,
+                static_cast<int>(K),
+                aptr,
+                static_cast<int>(K),
+                &beta,
+                cptr,
+                static_cast<int>(N)
+            );
+
+            if (status != CUBLAS_STATUS_SUCCESS) {
+                INFERNO_LOG_ERROR() << "cublas_mm_row_major_nt cublasSgemm failed" << std::endl;
+                exit(1);
+            }
+
+        }
+
+        else if constexpr (std::is_same_v<AT, double>) {
+
+            const double alpha = 1.0f;
+            const double beta = 0.0f;
+
+            // Row-major C = A @ B^T
+            //
+            // Column-major view:
+            // C_row[M,N] == C_col[N,M]
+            // C_col = B_col? @ A_col?
+            //
+            // This maps to:
+            // C^T = B @ A^T
+            //
+            // B is row-major [N,K]
+            // A is row-major [M,K]
+            //
+            // cuBLAS call:
+            // C_col[N,M] = B_col_like[N,K] * A_col_like[K,M]
+            //
+            cublasStatus_t status = cublasDgemm(
+                handle,
+                CUBLAS_OP_T,
+                CUBLAS_OP_N,
+                static_cast<int>(N),
+                static_cast<int>(M),
+                static_cast<int>(K),
+                &alpha,
+                bptr,
+                static_cast<int>(K),
+                aptr,
+                static_cast<int>(K),
+                &beta,
+                cptr,
+                static_cast<int>(N)
+            );
+
+            if (status != CUBLAS_STATUS_SUCCESS) {
+                INFERNO_LOG_ERROR() << "cublas_mm_row_major_nt cublasDgemm failed" << std::endl;
+                exit(1);
+            }
+
+        }
+
+
+    }
+
+
+
+    template void cublas_mm_row_major_tn<float>(const float*, const float*, float*, size_t, size_t, size_t);
+    template void cublas_mm_row_major_tn<double>(const double*, const double*, double*, size_t, size_t, size_t);
+
+
+
+
 }
 
 

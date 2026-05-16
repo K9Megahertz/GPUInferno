@@ -192,4 +192,114 @@ namespace Inferno {
     template void cuda_cross_entropy_loss_backward<float>(const float*, const int*, const float*, float*, size_t, size_t);
     template void cuda_cross_entropy_loss_backward<double>(const double*, const int*, const double*, double*, size_t, size_t);
 
+
+
+
+    template<typename LT, int BLOCK_SIZE>
+    __global__ void cross_entropy_loss_backward_kernel_fast(
+        const LT* logits,
+        const int* targets,
+        const LT* upstream,
+        LT* grad_logits,
+        size_t rows,
+        size_t vocab_size
+    ) {
+        size_t r = blockIdx.x;
+        if (r >= rows) return;
+
+        const LT* row_ptr = logits + r * vocab_size;
+        LT* grad_row = grad_logits + r * vocab_size;
+
+        int tid = threadIdx.x;
+        int target_id = targets[r];
+
+        if (target_id < 0 || static_cast<size_t>(target_id) >= vocab_size) {
+            return;
+        }
+
+        __shared__ LT sdata[BLOCK_SIZE];
+
+        // 1. parallel max
+        LT local_max = -INFINITY;
+
+        for (size_t v = tid; v < vocab_size; v += BLOCK_SIZE) {
+            LT x = row_ptr[v];
+            if (x > local_max) local_max = x;
+        }
+
+        sdata[tid] = local_max;
+        __syncthreads();
+
+        for (int stride = BLOCK_SIZE / 2; stride > 0; stride >>= 1) {
+            if (tid < stride) {
+                LT other = sdata[tid + stride];
+                if (other > sdata[tid]) sdata[tid] = other;
+            }
+            __syncthreads();
+        }
+
+        LT max_logit = sdata[0];
+
+        // 2. parallel sum exp
+        LT local_sum = static_cast<LT>(0);
+
+        for (size_t v = tid; v < vocab_size; v += BLOCK_SIZE) {
+            local_sum += exp(row_ptr[v] - max_logit);
+        }
+
+        sdata[tid] = local_sum;
+        __syncthreads();
+
+        for (int stride = BLOCK_SIZE / 2; stride > 0; stride >>= 1) {
+            if (tid < stride) {
+                sdata[tid] += sdata[tid + stride];
+            }
+            __syncthreads();
+        }
+
+        LT sum_exp = sdata[0];
+        LT scale = upstream[0] / static_cast<LT>(rows);
+
+        // 3. parallel write grad
+        for (size_t v = tid; v < vocab_size; v += BLOCK_SIZE) {
+            LT prob = exp(row_ptr[v] - max_logit) / sum_exp;
+            LT g = prob * scale;
+
+            if (static_cast<int>(v) == target_id) {
+                g -= scale;
+            }
+
+            grad_row[v] = g;
+        }
+    }
+
+    template<typename LT>
+    void cuda_cross_entropy_loss_backward_fast(
+        const LT* logits,
+        const int* targets,
+        const LT* upstream,
+        LT* grad_logits,
+        size_t rows,
+        size_t vocab_size
+    ) {
+        constexpr int threads = 256;
+        int blocks = static_cast<int>(rows);
+
+        cross_entropy_loss_backward_kernel_fast<LT, threads>
+            << <blocks, threads >> > (
+                logits,
+                targets,
+                upstream,
+                grad_logits,
+                rows,
+                vocab_size
+                );
+
+        check_cuda(cudaGetLastError(), "CUDA kernel launch error in cuda_cross_entropy_loss_backward");
+    }
+
+
+    template void cuda_cross_entropy_loss_backward_fast<float>(const float*, const int*, const float*, float*, size_t, size_t);
+    template void cuda_cross_entropy_loss_backward_fast<double>(const double*, const int*, const double*, double*, size_t, size_t);
+
 }

@@ -352,8 +352,7 @@ namespace Inferno {
 		size_t out_rank = out_shape.size();
 
 		if (a_rank < 2 || b_rank < 2 || out_rank < 2) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-				"cpu_matmul requires rank >= 2 tensors");
+			INFERNO_LOG_ERROR() << "cpu_matmul requires rank >= 2 tensors" << std::endl;
 			exit(1);
 		}
 
@@ -719,8 +718,7 @@ namespace Inferno {
 			int target_id = targets[r];
 
 			if (target_id < 0 || static_cast<size_t>(target_id) >= vocab_size) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-					"Target index out of bounds in cpu_cross_entropy_loss");
+				INFERNO_LOG_ERROR() << "Target index out of bounds in cpu_cross_entropy_loss" << std::endl;
 				exit(1);
 			}
 

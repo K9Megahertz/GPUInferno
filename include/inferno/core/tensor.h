@@ -112,7 +112,7 @@ namespace Inferno {
 		Tensor operator-() const;
 
 
-
+		
 
 
 
@@ -142,7 +142,7 @@ namespace Inferno {
 		void set_requires_grad(bool flag);
 
 
-
+		Tensor operator[](size_t index) const;
 
 		//properties defs
 		size_t size() const;
@@ -185,6 +185,8 @@ namespace Inferno {
 		double item_double_impl() const;
 		int64_t item_int64_impl() const;
 
+		template<typename T>
+		std::vector<T> to_vector() const;
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,6 +209,10 @@ namespace Inferno {
 				return static_cast<T>(item_double_impl());
 			}
 		}
+
+	
+
+
 
 
 
@@ -325,6 +331,18 @@ namespace Inferno {
 		return scalar / A;
 	}
 
+
+	template<>
+	std::vector<float> Tensor::to_vector<float>() const;
+
+	template<>
+	std::vector<double> Tensor::to_vector<double>() const;
+
+	template<>
+	std::vector<int> Tensor::to_vector<int>() const;
+
+	/*template<>
+	std::vector<uint32_t> Tensor::to_vector<uint32_t>() const;*/
 
 
 }

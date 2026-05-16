@@ -62,7 +62,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal sigmoid backward path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal sigmoid backward path";
 				cpu_sigmoid_backward<AT,GT,RT>(aptr, gptr, optr, out.numel());
 
 				break;
@@ -71,12 +71,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal sigmoid backward path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal sigmoid backward path";
 				cuda_sigmoid_backward<AT,GT,RT>(aptr, gptr, optr, out.numel());
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type";
 				exit(1);
 			}
 

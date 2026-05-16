@@ -156,13 +156,14 @@ namespace Inferno {
 			
 		}
 
-		cudaFree(d_src_ptrs);
-		cudaFree(d_src_shapes_flat);
-		cudaFree(d_src_strides_flat);
-		cudaFree(d_src_offsets);
-		cudaFree(d_axis_starts);
-		cudaFree(d_out_shape);
-		cudaFree(d_out_strides);
+		
+		check_cuda(cudaFree(d_src_ptrs), "cuda_concat failed to cudaFree");		
+		check_cuda(cudaFree(d_src_shapes_flat), "cuda_concat failed to cudaFree");		
+		check_cuda(cudaFree(d_src_strides_flat), "cuda_concat failed to cudaFree");		
+		check_cuda(cudaFree(d_src_offsets), "cuda_concat failed to cudaFree");		
+		check_cuda(cudaFree(d_axis_starts), "cuda_concat failed to cudaFree");		
+		check_cuda(cudaFree(d_out_shape), "cuda_concat failed to cudaFree");		
+		check_cuda(cudaFree(d_out_strides), "cuda_concat failed to cudaFree");
 		return;
 	
 	}

@@ -5,38 +5,43 @@
 #include <chrono>
 #include <utility>
 
-namespace Inferno {
+struct TimerLapResult {
+    std::string label;
+    double ms;
+};
 
-    class Timer {
-    public:
-        Timer(const std::string& name = "Timer");
 
-        void start();
-        void lap(const std::string& label);
-        void stop();
+class Timer {
+public:
+    Timer(const std::string& name = "Timer");
 
-        double elapsed_ms() const;
-        double elapsed_sec() const;
+    void start();
+    void lap(const std::string& label);
+    std::vector<TimerLapResult> lap_results() const;
+    void stop();
 
-        bool is_running() const;
-        void reset();
+    double elapsed_ms() const;
+    double elapsed_sec() const;
 
-    private:
-        using Clock = std::chrono::high_resolution_clock;
-        using TimePoint = std::chrono::time_point<Clock>;
 
-        struct LapEntry {
-            std::string label;
-            TimePoint time;
-        };
+    bool is_running() const;
+    void reset();
 
-        std::string m_name;
-        bool m_running;
+private:
+    using Clock = std::chrono::high_resolution_clock;
+    using TimePoint = std::chrono::time_point<Clock>;
 
-        TimePoint m_start;
-        TimePoint m_end;
-
-        std::vector<LapEntry> m_laps;
+    struct LapEntry {
+        std::string label;
+        TimePoint time;
     };
 
-}
+    std::string m_name;
+    bool m_running;
+
+    TimePoint m_start;
+    TimePoint m_end;
+
+    std::vector<LapEntry> m_laps;
+};
+

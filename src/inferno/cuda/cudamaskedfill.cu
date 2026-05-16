@@ -127,15 +127,16 @@ namespace Inferno {
         size_t* d_mask_shape = nullptr;
         size_t* d_mask_strides = nullptr;
 
-        cudaMalloc(&d_input_shape, input_rank * sizeof(size_t));
-        cudaMalloc(&d_input_strides, input_rank * sizeof(size_t));
-        cudaMalloc(&d_mask_shape, mask_rank * sizeof(size_t));
-        cudaMalloc(&d_mask_strides, mask_rank * sizeof(size_t));
-
-        cudaMemcpy(d_input_shape, input_shape.data(), input_rank * sizeof(size_t), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_input_strides, input_strides.data(), input_rank * sizeof(size_t), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_mask_shape, mask_shape.data(), mask_rank * sizeof(size_t), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_mask_strides, mask_strides.data(), mask_rank * sizeof(size_t), cudaMemcpyHostToDevice);
+        
+        check_cuda(cudaMalloc(&d_input_shape, input_rank * sizeof(size_t)), "cuda_masked_fill failed to cudaMalloc");        
+        check_cuda(cudaMalloc(&d_input_strides, input_rank * sizeof(size_t)), "cuda_masked_fill failed to cudaMalloc");        
+        check_cuda(cudaMalloc(&d_mask_shape, mask_rank * sizeof(size_t)), "cuda_masked_fill failed to cudaMalloc");        
+        check_cuda(cudaMalloc(&d_mask_strides, mask_rank * sizeof(size_t)), "cuda_masked_fill failed to cudaMalloc");
+        
+        check_cuda(cudaMemcpy(d_input_shape, input_shape.data(), input_rank * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_masked_fill failed to cudaMemcpy");        
+        check_cuda(cudaMemcpy(d_input_strides, input_strides.data(), input_rank * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_masked_fill failed to cudaMemcpy");        
+        check_cuda(cudaMemcpy(d_mask_shape, mask_shape.data(), mask_rank * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_masked_fill failed to cudaMemcpy");        
+        check_cuda(cudaMemcpy(d_mask_strides, mask_strides.data(), mask_rank * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_masked_fill failed to cudaMemcpy");
 
         constexpr int threads = 256;
         int blocks = static_cast<int>((total_elements + threads - 1) / threads);
@@ -156,10 +157,11 @@ namespace Inferno {
             value
             );
 
-        cudaFree(d_input_shape);
-        cudaFree(d_input_strides);
-        cudaFree(d_mask_shape);
-        cudaFree(d_mask_strides);
+        
+        check_cuda(cudaFree(d_input_shape), "cuda_masked_fill failed to cudaFree");        
+        check_cuda(cudaFree(d_input_strides), "cuda_masked_fill failed to cudaFree");        
+        check_cuda(cudaFree(d_mask_shape), "cuda_masked_fill failed to cudaFree");        
+        check_cuda(cudaFree(d_mask_strides), "cuda_masked_fill failed to cudaFree");
 
     }
 

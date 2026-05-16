@@ -44,7 +44,7 @@ namespace Inferno {
 		// send gradients upstream
 		if (na)
 			Engine::accumulate(na.get(), 0, g_out);	
-
+		
 	}
 
 
@@ -81,6 +81,7 @@ namespace Inferno {
 		out.push_back(m_A);
 		
 	}
+
 
 
 }

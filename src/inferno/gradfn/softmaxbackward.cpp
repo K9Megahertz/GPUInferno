@@ -71,7 +71,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal softmax backward path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal softmax backward path";
 				cpu_softmax_backward<AT, GT, RT>(
 					aptr,
 					gptr,
@@ -91,7 +91,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal softmax backward path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal softmax backward path";
 				cuda_softmax_backward<AT, GT, RT>(
 					aptr,
 					gptr,
@@ -108,7 +108,7 @@ namespace Inferno {
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type";
 				exit(1);
 			}
 

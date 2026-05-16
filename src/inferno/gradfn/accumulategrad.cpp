@@ -17,7 +17,7 @@ namespace Inferno {
 	void AccumulateGrad::backward() {
 
 		NoGradGuard guard;
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "AccumulateGrad::backward()");
+		INFERNO_LOG_DEBUG() << "AccumulateGrad::backward()" << std::endl;
         // gradient that arrived at this leaf accumulator
         Tensor g_in = Engine::grad_in(this, 0);
 

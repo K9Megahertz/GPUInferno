@@ -28,7 +28,7 @@ namespace Inferno {
 			// CPU Code Path
 			////////////////////////////////////////////////////
 			case DeviceType::CPU: {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal select backward path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal select backward path";
 				for (size_t i = 0; i < out.numel(); ++i)
 					optr[i] = static_cast<AT>(0);
 				break;
@@ -38,11 +38,11 @@ namespace Inferno {
 			// CUDA Code Path
 			////////////////////////////////////////////////////
 			case DeviceType::CUDA:				
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal select backward path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal select backward path";
 				Inferno::cuda_fill<AT>(optr, AT(0), out.numel());
 				break;
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type";
 				exit(1);
 			}
 
@@ -78,7 +78,7 @@ namespace Inferno {
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type";
 				exit(1);
 			}
 

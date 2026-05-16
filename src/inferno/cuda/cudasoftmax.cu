@@ -139,13 +139,15 @@ namespace Inferno {
 		size_t* d_astrides = nullptr;
 		size_t* d_ostrides = nullptr;
 
-		cudaMalloc(&d_shape, ndim * sizeof(size_t));
-		cudaMalloc(&d_astrides, ndim * sizeof(size_t));
-		cudaMalloc(&d_ostrides, ndim * sizeof(size_t));
+		
+		check_cuda(cudaMalloc(&d_shape, ndim * sizeof(size_t)), "cuda_softmax failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_astrides, ndim * sizeof(size_t)), "cuda_softmax failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_ostrides, ndim * sizeof(size_t)), "cuda_softmax failed to cudaMalloc");
 
-		cudaMemcpy(d_shape, shape.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_astrides, astrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_ostrides, ostrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
+		
+		check_cuda(cudaMemcpy(d_shape, shape.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax failed to cudamemcpy");		
+		check_cuda(cudaMemcpy(d_astrides, astrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax failed to cudamemcpy");
+		check_cuda(cudaMemcpy(d_ostrides, ostrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax failed to cudamemcpy");
 
 		constexpr int threads = 256;
 		int blocks = static_cast<int>((groups + threads - 1) / threads);
@@ -164,11 +166,12 @@ namespace Inferno {
 			axis_size
 			);
 
-		check_cuda(cudaGetLastError(), "cuda_softmax_strided launch failed");		
+		check_cuda(cudaGetLastError(), "cuda_softmax_strided_kernel launch failed");		
 
-		cudaFree(d_shape);
-		cudaFree(d_astrides);
-		cudaFree(d_ostrides);
+		
+		check_cuda(cudaFree(d_shape), "cuda_softmax failed to cudaFree");		
+		check_cuda(cudaFree(d_astrides), "cuda_softmax failed to cudaFree");		
+		check_cuda(cudaFree(d_ostrides), "cuda_softmax failed to cudaFree");
 	}
 
 
@@ -331,15 +334,17 @@ namespace Inferno {
 		size_t* d_gstrides = nullptr;
 		size_t* d_ostrides = nullptr;
 
-		cudaMalloc(&d_shape, ndim * sizeof(size_t));
-		cudaMalloc(&d_ystrides, ndim * sizeof(size_t));
-		cudaMalloc(&d_gstrides, ndim * sizeof(size_t));
-		cudaMalloc(&d_ostrides, ndim * sizeof(size_t));
+		
+		check_cuda(cudaMalloc(&d_shape, ndim * sizeof(size_t)), "cuda_softmax_backward failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_ystrides, ndim * sizeof(size_t)), "cuda_softmax_backward failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_gstrides, ndim * sizeof(size_t)), "cuda_softmax_backward failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_ostrides, ndim * sizeof(size_t)), "cuda_softmax_backward failed to cudaMalloc");
 
-		cudaMemcpy(d_shape, shape.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_ystrides, ystrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_gstrides, gstrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_ostrides, ostrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice);
+		
+		check_cuda(cudaMemcpy(d_shape, shape.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax_backward failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_ystrides, ystrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax_backward failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_gstrides, gstrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax_backward failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_ostrides, ostrides.data(), ndim * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_softmax_backward failed to cudaMemcpy");
 
 		constexpr int threads = 256;
 		int blocks = static_cast<int>((groups + threads - 1) / threads);
@@ -366,10 +371,11 @@ namespace Inferno {
 			std::printf("cuda_softmax_backward_strided launch failed: %s\n", cudaGetErrorString(err));
 		}
 
-		cudaFree(d_shape);
-		cudaFree(d_ystrides);
-		cudaFree(d_gstrides);
-		cudaFree(d_ostrides);
+		
+		check_cuda(cudaFree(d_shape), "cuda_softmax_backward failed to cudaFree");		
+		check_cuda(cudaFree(d_ystrides), "cuda_softmax_backward failed to cudaFree");		
+		check_cuda(cudaFree(d_gstrides), "cuda_softmax_backward failed to cudaFree");		
+		check_cuda(cudaFree(d_ostrides), "cuda_softmax_backward failed to cudaFree");
 	}
 
 

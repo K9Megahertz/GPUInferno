@@ -69,13 +69,14 @@ namespace Inferno {
 		size_t* d_gstrides = nullptr;
 		size_t* d_parent_strides = nullptr;
 
-		cudaMalloc(&d_out_shape, ndim_out * sizeof(size_t));
-		cudaMalloc(&d_gstrides, ndim_out * sizeof(size_t));
-		cudaMalloc(&d_parent_strides, (ndim_out + 1) * sizeof(size_t));
-
-		cudaMemcpy(d_out_shape, out_shape.data(), ndim_out * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_gstrides, gstrides.data(), ndim_out * sizeof(size_t), cudaMemcpyHostToDevice);
-		cudaMemcpy(d_parent_strides, parent_strides.data(), (ndim_out + 1) * sizeof(size_t), cudaMemcpyHostToDevice);
+		
+		check_cuda(cudaMalloc(&d_out_shape, ndim_out * sizeof(size_t)), "cuda_select_backward_strided failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_gstrides, ndim_out * sizeof(size_t)), "cuda_select_backward_strided failed to cudaMalloc");		
+		check_cuda(cudaMalloc(&d_parent_strides, (ndim_out + 1) * sizeof(size_t)), "cuda_select_backward_strided failed to cudaMalloc");
+		
+		check_cuda(cudaMemcpy(d_out_shape, out_shape.data(), ndim_out * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_select_backward_strided failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_gstrides, gstrides.data(), ndim_out * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_select_backward_strided failed to cudaMemcpy");		
+		check_cuda(cudaMemcpy(d_parent_strides, parent_strides.data(), (ndim_out + 1) * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_select_backward_strided failed to cudaMemcpy");
 
 		constexpr int threads = 256;
 		int blocks = static_cast<int>((N + threads - 1) / threads);
@@ -92,9 +93,10 @@ namespace Inferno {
 			std::printf("cuda_select_backward_strided launch failed: %s\n", cudaGetErrorString(err));
 		}
 
-		cudaFree(d_out_shape);
-		cudaFree(d_gstrides);
-		cudaFree(d_parent_strides);
+		
+		check_cuda(cudaFree(d_out_shape), "cuda_select_backward_strided failed to cudaFree");		
+		check_cuda(cudaFree(d_gstrides), "cuda_select_backward_strided failed to cudaFree");		
+		check_cuda(cudaFree(d_parent_strides), "cuda_select_backward_strided failed to cudaFree");
 	}
 
 	template void cuda_select_backward_strided<float>(

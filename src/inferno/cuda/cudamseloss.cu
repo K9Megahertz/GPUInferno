@@ -88,11 +88,11 @@ namespace Inferno {
         constexpr int threads = 256;
         int blocks = static_cast<int>((numel + threads - 1) / threads);
 
-        RT* temp = nullptr;
-        cudaMalloc(&temp, numel * sizeof(RT));
+        RT* temp = nullptr;        
+        check_cuda(cudaMalloc(&temp, numel * sizeof(RT)), "cuda_mse_loss failed to cudaMalloc");
 
         mse_loss_elementwise_kernel << <blocks, threads >> > (a, b, temp, numel);
-        cudaDeviceSynchronize();
+        //cudaDeviceSynchronize();
 
         RT* current_in = temp;
         size_t current_size = numel;
@@ -104,24 +104,26 @@ namespace Inferno {
             int reduce_blocks = static_cast<int>((current_size + threads - 1) / threads);
 
             RT* partial = nullptr;
-            cudaMalloc(&partial, reduce_blocks * sizeof(RT));
+            
+            check_cuda(cudaMalloc(&partial, reduce_blocks * sizeof(RT)), "cuda_mse_loss failed to cudaMalloc");
             allocations.push_back(partial);
 
             reduce_sum_kernel << <reduce_blocks, threads, threads * sizeof(RT) >> > (current_in, partial, current_size);
-            cudaDeviceSynchronize();
+            //cudaDeviceSynchronize();
 
             current_in = partial;
             current_size = reduce_blocks;
         }
 
         // divide by numel
-        RT host_sum{};
-        cudaMemcpy(&host_sum, current_in, sizeof(RT), cudaMemcpyDeviceToHost);
-        host_sum /= static_cast<RT>(numel);
-        cudaMemcpy(out, &host_sum, sizeof(RT), cudaMemcpyHostToDevice);
+        RT host_sum{};        
+        check_cuda(cudaMemcpy(&host_sum, current_in, sizeof(RT), cudaMemcpyDeviceToHost), "cuda_mse_loss failed to cudamemcpy");
 
-        for (RT* ptr : allocations) {
-            cudaFree(ptr);
+        host_sum /= static_cast<RT>(numel);        
+        check_cuda(cudaMemcpy(out, &host_sum, sizeof(RT), cudaMemcpyHostToDevice), "cuda_mse_loss failed to cudamemcpy");
+
+        for (RT* ptr : allocations) {            
+            check_cuda(cudaFree(ptr), "cuda_mse_loss failed to cudaFree");
         }
     }
 
@@ -211,17 +213,15 @@ namespace Inferno {
 
         cudaError_t err = cudaGetLastError();
         if (err != cudaSuccess) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string("mse_loss_backward_kernel launch failed: ") + cudaGetErrorString(err)
-            );
+            INFERNO_LOG_ERROR() << "mse_loss_backward_kernel launch failed: " << cudaGetErrorString(err);
             exit(1);
         }
 
-        cudaDeviceSynchronize();
+        //cudaDeviceSynchronize();
 
         err = cudaGetLastError();
         if (err != cudaSuccess) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, std::string("mse_loss_backward_kernel execution failed: ") + cudaGetErrorString(err)
-            );
+            INFERNO_LOG_ERROR() << "mse_loss_backward_kernel execution failed: " << cudaGetErrorString(err);
             exit(1);
         }
     }

@@ -131,6 +131,18 @@ namespace InfernoTokenizer {
 		return out;
 	}
 
+	std::string BPETokenizer::decode(const std::vector<int>& tokens) {
+		std::string out;
+
+		for (int t : tokens) {
+			out += m_vocablist[t];
+		}
+
+		return out;
+	}
+
+
+	
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

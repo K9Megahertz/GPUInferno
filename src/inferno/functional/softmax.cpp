@@ -33,7 +33,7 @@ namespace Inferno {
 
 			//valid axis?
 			if (ax < 0 || ax >= int(ndim)) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "softmax: invalid axis");
+				INFERNO_LOG_DEBUG() << "softmax: invalid axis";
 				exit(1);
 			}
 
@@ -49,7 +49,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal softmax path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal softmax path";
 				cpu_softmax<AT,RT>(aptr, optr, A.shape(), A.strides(), out.strides(), A.offset(), out.offset(), ax);					
 				break;
 
@@ -57,18 +57,18 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal softmax path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal softmax path";
 				//cuda_softmax(aptr, optr, outer, dim, inner, off, N);
 				cuda_softmax<AT,RT>(aptr, optr, A.shape(), A.strides(), out.strides(), A.offset(), out.offset(), ax);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type";
 				exit(1);
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Softmax - Making a SoftmaxBackward node");
+				INFERNO_LOG_DEBUG() << "Softmax - Making a SoftmaxBackward node";
 				GetImpl(out)->gradfn() = std::make_shared<SoftmaxBackward>(A, out, ax);
 			}
 

@@ -82,22 +82,23 @@ namespace Inferno {
         }
 
         err = cudaMalloc(&d_strides, rank * sizeof(size_t));
-        if (err != cudaSuccess) {
-            cudaFree(d_shape);
+        if (err != cudaSuccess) {            
+            check_cuda(cudaFree(d_shape), "cuda_contiguous_copy failed to cudaFree");
             throw std::runtime_error("cuda_contiguous_copy: cudaMalloc failed for d_strides");
         }
 
         err = cudaMemcpy(d_shape, shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
         if (err != cudaSuccess) {
-            cudaFree(d_shape);
-            cudaFree(d_strides);
+            
+            check_cuda(cudaFree(d_shape), "cuda_contiguous_copy failed to cudaFree");            
+            check_cuda(cudaFree(d_strides), "cuda_contiguous_copy failed to cudaFree");
             throw std::runtime_error("cuda_contiguous_copy: cudaMemcpy failed for d_shape");
         }
 
         err = cudaMemcpy(d_strides, strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) {
-            cudaFree(d_shape);
-            cudaFree(d_strides);
+        if (err != cudaSuccess) {            
+            check_cuda(cudaFree(d_shape), "cuda_contiguous_copy failed to cudaFree");            
+            check_cuda(cudaFree(d_strides), "cuda_contiguous_copy failed to cudaFree");
             throw std::runtime_error("cuda_contiguous_copy: cudaMemcpy failed for d_strides");
         }
 
@@ -115,27 +116,21 @@ namespace Inferno {
             );
 
         err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            cudaFree(d_shape);
-            cudaFree(d_strides);
-            throw std::runtime_error(
-                std::string("cuda_contiguous_copy: kernel launch failed: ") +
-                cudaGetErrorString(err)
-            );
+        if (err != cudaSuccess) {            
+            check_cuda(cudaFree(d_shape), "cuda_contiguous_copy failed to cudaFree");
+            check_cuda(cudaFree(d_strides), "cuda_contiguous_copy failed to cudaFree");
+            throw std::runtime_error(std::string("cuda_contiguous_copy: kernel launch failed: ") + cudaGetErrorString(err));
         }
 
-        err = cudaDeviceSynchronize();
-        if (err != cudaSuccess) {
-            cudaFree(d_shape);
-            cudaFree(d_strides);
-            throw std::runtime_error(
-                std::string("cuda_contiguous_copy: kernel execution failed: ") +
-                cudaGetErrorString(err)
-            );
-        }
-
-        cudaFree(d_shape);
-        cudaFree(d_strides);
+        /*err = cudaDeviceSynchronize();
+        if (err != cudaSuccess) {            
+            check_cuda(cudaFree(d_shape), "cuda_contiguous_copy failed to cudaFree");
+            check_cuda(cudaFree(d_strides), "cuda_contiguous_copy failed to cudaFree");
+            throw std::runtime_error(std::string("cuda_contiguous_copy: kernel execution failed: ") + cudaGetErrorString(err));
+        }*/
+        
+        check_cuda(cudaFree(d_shape), "cuda_contiguous_copy failed to cudaFree");        
+        check_cuda(cudaFree(d_strides), "cuda_contiguous_copy failed to cudaFree");
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

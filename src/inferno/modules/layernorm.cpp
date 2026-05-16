@@ -74,22 +74,22 @@ namespace Inferno {
             switch (input.device().m_type) {
 
             case DeviceType::CPU:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal layernorm path");
+                INFERNO_LOG_DEBUG() << "CPU Code path - Using normal layernorm path" << std::endl;
                 cpu_layer_normalization<AT>(iptr,optr,gptr,bptr,meanptr,invstdptr,num_batches,m_dim,m_eps);
                 break;
 
             case DeviceType::CUDA:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal layernorm path");
+                INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal layernorm path" << std::endl;
                 cuda_layer_normalization<AT>(iptr,optr,gptr,bptr,meanptr,invstdptr,num_batches,m_dim,m_eps);
                 break;
 
             default:
-                Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+                INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
                 exit(1);
             }
 
             if (Inferno::grad_enabled && req) {
-                Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "LayerNorm - Making a LayerNormBackward node");
+                INFERNO_LOG_DEBUG() << "LayerNorm - Making a LayerNormBackward node" << std::endl;
                 GetImpl(out)->gradfn() = std::make_shared<LayerNormBackward>(input, m_gamma, m_beta, saved_mean, saved_invstd, m_dim);
             }
 

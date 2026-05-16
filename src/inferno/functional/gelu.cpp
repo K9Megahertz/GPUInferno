@@ -53,11 +53,11 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:				
 				if (A.is_contiguous() && out.is_contiguous()) {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using optimized gulu path");
+					INFERNO_LOG_DEBUG() << "CPU Code path - Using optimized gulu path" << std::endl;
 					cpu_gelu<AT,RT>(aptr, optr, N, aoffset);
 				}
 				else {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using strided gulu path");
+					INFERNO_LOG_DEBUG() << "CPU Code path - Using strided gulu path" << std::endl;
 					cpu_gelu_strided<AT, RT>(aptr, optr, shape, astrides, ostrides, aoffset, ooffset);
 				}
 				
@@ -68,23 +68,23 @@ namespace Inferno {
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:				
 				if (A.is_contiguous() && out.is_contiguous()) {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using optimized gelu path");
+					INFERNO_LOG_DEBUG() << "CUDA Code path - Using optimized gelu path" << std::endl;
 					cuda_gelu<AT, RT>(aptr, optr, N, aoffset);
 					
 				}
 				else {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using strided gelu path");
+					INFERNO_LOG_DEBUG() << "CUDA Code path - Using strided gelu path" << std::endl;
 					cuda_gelu_strided<AT, RT>(aptr, optr, shape, astrides, ostrides, aoffset, ooffset);
 				}				
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
 			if ((Inferno::grad_enabled) && (A.requires_grad())) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Gelu - Making an GeluBackward node");
+				INFERNO_LOG_DEBUG() << "Gelu - Making an GeluBackward node" << std::endl;
 				implout->gradfn() = std::make_shared<GeluBackward>(A, out);
 			}
 

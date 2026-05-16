@@ -1,6 +1,6 @@
 #include <inferno/modules/module.h>
 #include <inferno/core/tensorimpl.h>
-#include "inferno/util/logger.h"
+#include <logger/logger.h>
 
 namespace Inferno {
 
@@ -17,7 +17,7 @@ namespace Inferno {
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Tensor Module::forward(Tensor& input) {
-		Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "forward(input) not implemented!");
+		INFERNO_LOG_ERROR() << "forward(input) not implemented!";
 		exit(1);
 	};
 
@@ -54,7 +54,7 @@ namespace Inferno {
 	void Module::register_parameter(const std::string& name, Tensor* tensor) {
 		// Check for name collisions
 		if (check_name_exists(name)) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Module/Parameter/Buffer name conflict, already used");
+			INFERNO_LOG_ERROR() << "Module/Parameter/Buffer name conflict, already used";
 			exit(1);
 		}
 
@@ -77,7 +77,7 @@ namespace Inferno {
 	void Module::register_module(const std::string& name, Module* module) {
 		// Check for name collisions
 		if (check_name_exists(name)) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Module/Parameter/Buffer name conflict, already used");
+			INFERNO_LOG_ERROR() << "Module/Parameter/Buffer name conflict, already used";
 			exit(1);
 		}
 
@@ -99,7 +99,7 @@ namespace Inferno {
 	void Module::register_buffer(const std::string& name, Tensor* tensor) {
 		// Check for name collisions
 		if (check_name_exists(name)) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Module/Parameter/Buffer name conflict, already used");
+			INFERNO_LOG_ERROR() << "Module/Parameter/Buffer name conflict, already used";
 			exit(1);
 		}
 		// Store pointer to the tensor		

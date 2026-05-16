@@ -64,11 +64,12 @@ namespace Inferno {
         size_t* d_shape = nullptr;
         size_t* d_strides = nullptr;
 
-        cudaMalloc(&d_shape, rank * sizeof(size_t));
-        cudaMalloc(&d_strides, rank * sizeof(size_t));
-
-        cudaMemcpy(d_shape, shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_strides, strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice);
+        
+        check_cuda(cudaMalloc(&d_shape, rank * sizeof(size_t)), "cuda_triu failed to cudaMalloc");        
+        check_cuda(cudaMalloc(&d_strides, rank * sizeof(size_t)), "cuda_triu failed to cudaMalloc");
+        
+        check_cuda(cudaMemcpy(d_shape, shape.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_triu failed to cudaMemcpy");        
+        check_cuda(cudaMemcpy(d_strides, strides.data(), rank * sizeof(size_t), cudaMemcpyHostToDevice), "cuda_triu failed to cudaMemcpy");
 
         constexpr int threads = 256;
         int blocks = static_cast<int>((out_numel + threads - 1) / threads);
@@ -84,8 +85,9 @@ namespace Inferno {
             diagonal
             );
 
-        cudaFree(d_shape);
-        cudaFree(d_strides);
+        
+        check_cuda(cudaFree(d_shape), "cuda_triu failed to cudaFree");        
+        check_cuda(cudaFree(d_strides), "cuda_triu failed to cudaFree");
     }
 
     template void cuda_triu<int>(const int*, int*, const std::vector<size_t>&, const std::vector<size_t>&, size_t, size_t, int);

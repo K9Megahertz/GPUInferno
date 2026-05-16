@@ -27,6 +27,7 @@ namespace InfernoTokenizer {
 
         std::vector<uint32_t> encode(const std::string& text);
         std::string decode(const std::vector<uint32_t>& tokens);
+        std::string decode(const std::vector<int>& tokens);
         
 
         void load_merges(const std::string& filename);

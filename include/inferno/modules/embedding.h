@@ -28,10 +28,11 @@ namespace Inferno {
         Tensor operator()(Tensor& input) {
             return forward(input);
         }
-        
+       
+        Tensor m_embeddings;  // [vocab_size, embedding_dim]
     private:
         Tensor embedding_impl(const Tensor& token_ids, Tensor& m_embeddings);
-        Tensor m_embeddings;  // [vocab_size, embedding_dim]
+       
         
     };
 

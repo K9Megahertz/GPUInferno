@@ -4,6 +4,12 @@
 
 namespace Inferno {
 
+    struct ShapeMeta {
+        int rank;
+        size_t src_shape[45];
+        size_t dst_strides[45];
+    };
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,6 +39,42 @@ namespace Inferno {
         size_t dst_offset = 0;
         for (int d = 0; d < src_rank; ++d) {
             dst_offset += src_idx[d] * temp_dst_strides[d];
+        }
+
+        gpu_atomic_add(&dst_ptr[dst_offset], src_ptr[linear]);
+    }
+
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //
+   //  Function sum_to_shape_kernel
+   //
+   //
+   //
+   //
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    template<typename AT>
+    __global__ void sum_to_shape_kernel_fastmeta(
+        const AT* __restrict__ src_ptr,
+        AT* __restrict__ dst_ptr,
+        size_t src_numel,
+        ShapeMeta meta
+    ) {
+        size_t linear = blockIdx.x * blockDim.x + threadIdx.x;
+        if (linear >= src_numel) return;
+
+        size_t tmp = linear;
+        size_t dst_offset = 0;
+
+#pragma unroll
+        for (int d = meta.rank - 1; d >= 0; --d) {
+            size_t idx = tmp % meta.src_shape[d];
+            tmp /= meta.src_shape[d];
+            dst_offset += idx * meta.dst_strides[d];
         }
 
         gpu_atomic_add(&dst_ptr[dst_offset], src_ptr[linear]);
@@ -71,10 +113,37 @@ namespace Inferno {
         sum_to_shape_kernel<AT> << <blocks, threads >> > (src_ptr, dst_ptr, src_numel, static_cast<int>(src_rank), d_src_shape, d_temp_dst_strides);
 
         check_cuda(cudaGetLastError(), "sum_to_shape kernel launch failed");
-        check_cuda(cudaDeviceSynchronize(), "sum_to_shape kernel execution failed");
+        //check_cuda(cudaDeviceSynchronize(), "sum_to_shape kernel execution failed");
 
         check_cuda(cudaFree(d_src_shape), "cudaFree d_src_shape failed");
         check_cuda(cudaFree(d_temp_dst_strides), "cudaFree d_temp_dst_strides failed");
+    }
+
+
+    template <typename AT>
+    void cuda_sum_to_shape_fast(AT* dst_ptr, const AT* src_ptr, size_t src_numel, size_t src_rank, const std::vector<size_t>& src_shape, const std::vector<size_t>& temp_dst_strides, size_t out_numel) {
+        // Zero destination tensor on device
+        check_cuda(cudaMemset(dst_ptr, 0, out_numel * sizeof(AT)), "sum_to_shape cudaMemset failed");        
+        
+
+        ShapeMeta meta{};
+        meta.rank = static_cast<int>(src_rank);
+
+        for (size_t i = 0; i < src_rank; i++) {
+            meta.src_shape[i] = src_shape[i];
+            meta.dst_strides[i] = temp_dst_strides[i];
+        }
+
+
+        constexpr int threads = 256;
+        int blocks = static_cast<int>((src_numel + threads - 1) / threads);
+
+        sum_to_shape_kernel_fastmeta<AT> << <blocks, threads >> > (src_ptr, dst_ptr, src_numel, meta);
+
+
+        check_cuda(cudaGetLastError(), "sum_to_shape kernel launch failed");
+        
+        
     }
 
 
@@ -95,4 +164,9 @@ namespace Inferno {
     template void cuda_sum_to_shape<double>(double*, const double*, size_t, size_t, const std::vector<size_t>&, const std::vector<size_t>&, size_t);
 
 
+
+
+    template void cuda_sum_to_shape_fast<int>(int*, const int*, size_t, size_t, const std::vector<size_t>&, const std::vector<size_t>&, size_t);
+    template void cuda_sum_to_shape_fast<float>(float*, const float*, size_t, size_t, const std::vector<size_t>&, const std::vector<size_t>&, size_t);
+    template void cuda_sum_to_shape_fast<double>(double*, const double*, size_t, size_t, const std::vector<size_t>&, const std::vector<size_t>&, size_t);
 }

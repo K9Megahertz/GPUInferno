@@ -1,5 +1,5 @@
 #include "cudastorage.h"
-
+#include "inferno/cuda/cudaops.h"
 namespace  Inferno {
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14,11 +14,12 @@ namespace  Inferno {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     CUDAStorage::CUDAStorage(size_t numbytes) {
-        cudaMalloc(&ptr, numbytes);
+        
+		check_cuda(cudaMalloc(&ptr, numbytes), "CUDAstorage failed to cudaMalloc");
         m_numbytes = numbytes;
     }
 
-    CUDAStorage::~CUDAStorage() {
-        cudaFree(ptr);
+    CUDAStorage::~CUDAStorage() {        
+		check_cuda(cudaFree(ptr), "CUDAstorage failed to cudaFree");
     }
 }

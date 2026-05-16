@@ -28,7 +28,7 @@ namespace Inferno {
 
 
 			if (dst_rank > src_rank) {
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "sum_to_shape: target rank larger than source rank");
+				INFERNO_LOG_ERROR() << "sum_to_shape: target rank larger than source rank" << std::endl;
 				exit(1);
 			}
 
@@ -63,7 +63,7 @@ namespace Inferno {
 					temp_dst_strides[d] = 0;
 				}
 				else if (padded_target[d] != src_shape[d] && padded_target[d] != 1) {
-					Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "sum_to_shape: incompatible shapes");
+					INFERNO_LOG_ERROR() << "sum_to_shape: incompatible shapes" << std::endl;
 					exit(1);
 				}
 			}
@@ -82,7 +82,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal sum_to_shape path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal sum_to_shape path" << std::endl;
 				cpu_sum_to_shape(dst_ptr, src_ptr, src_numel, src_rank, src_shape, temp_dst_strides, out_numel);
 
 				break;
@@ -91,12 +91,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal sum_to_shape path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal sum_to_shape path" << std::endl;
 				cuda_sum_to_shape(dst_ptr, src_ptr, src_numel, src_rank, src_shape, temp_dst_strides, out_numel);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 
@@ -121,7 +121,7 @@ namespace Inferno {
 
 
 		if (token_ids.device() != embeddings.device() || g_out.device() != embeddings.device()) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "scatter_add_embedding: device mismatch.");
+			INFERNO_LOG_ERROR() << "scatter_add_embedding: device mismatch." << std::endl;
 			exit(1);
 		}
 
@@ -132,7 +132,7 @@ namespace Inferno {
 
 
 		if (g_out.shape().back() != embed_dim) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "scatter_add_embedding: g_out last dim must match embedding dim.");
+			INFERNO_LOG_ERROR() << "scatter_add_embedding: g_out last dim must match embedding dim." << std::endl;
 			exit(1);
 		}
 
@@ -141,7 +141,7 @@ namespace Inferno {
 
 		// g_out should have one embedding vector per token position
 		if (g_out.numel() != numtokens * embed_dim) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "scatter_add_embedding: g_out shape does not match token_ids.shape + [embed_dim].");
+			INFERNO_LOG_ERROR() << "scatter_add_embedding: g_out shape does not match token_ids.shape + [embed_dim]." << std::endl;
 			exit(1);
 		}
 
@@ -166,7 +166,7 @@ namespace Inferno {
 					// CPU Code Path
 					////////////////////////////////////////////////////
 				case DeviceType::CPU:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal scatter_add_embedding path");
+					INFERNO_LOG_DEBUG() << "CPU Code path - Using normal scatter_add_embedding path" << std::endl;
 					cpu_scatter_add_embedding<AT, BT>(gptr, tptr, optr, embed_dim, numtokens);
 
 					break;
@@ -175,12 +175,12 @@ namespace Inferno {
 					// CUDA Code Path
 					////////////////////////////////////////////////////
 				case DeviceType::CUDA:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal scatter_add_embedding path");
+					INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal scatter_add_embedding path" << std::endl;
 					cuda_scatter_add_embedding<AT, BT>(gptr, tptr, optr, embed_dim, numtokens);
 					break;
 
 				default:
-					Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+					INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 					exit(1);
 				}
 
@@ -208,26 +208,17 @@ namespace Inferno {
 	Tensor scatter_add_slice(Tensor& A, const Tensor& g_out, int axis, size_t start, size_t step) {
 
 		if (A.device() != g_out.device()) {
-			Logger::Append(
-				Logger::LogLevel::LOGLEVEL_ERROR,
-				"scatter_add_slice: g_a and g_out must be on the same device."
-			);
+			INFERNO_LOG_ERROR() << "scatter_add_slice: g_a and g_out must be on the same device." << std::endl;
 			exit(1);
 		}
 
 		if (A.dtype() != g_out.dtype()) {
-			Logger::Append(
-				Logger::LogLevel::LOGLEVEL_ERROR,
-				"scatter_add_slice: g_a and g_out must have the same dtype."
-			);
+			INFERNO_LOG_ERROR() << "scatter_add_slice: g_a and g_out must have the same dtype." << std::endl;
 			exit(1);
 		}
 
 		if (A.shape().size() != g_out.shape().size()) {
-			Logger::Append(
-				Logger::LogLevel::LOGLEVEL_ERROR,
-				"scatter_add_slice: rank mismatch between g_a and g_out."
-			);
+			INFERNO_LOG_ERROR() << "scatter_add_slice: rank mismatch between g_a and g_out." << std::endl;
 			exit(1);
 		}
 
@@ -236,18 +227,12 @@ namespace Inferno {
 		}
 
 		if (axis < 0 || axis >= static_cast<int>(A.shape().size())) {
-			Logger::Append(
-				Logger::LogLevel::LOGLEVEL_ERROR,
-				"scatter_add_slice: axis out of bounds."
-			);
+			INFERNO_LOG_ERROR() << "scatter_add_slice: axis out of bounds." << std::endl;
 			exit(1);
 		}
 
 		if (step == 0) {
-			Logger::Append(
-				Logger::LogLevel::LOGLEVEL_ERROR,
-				"scatter_add_slice: step cannot be 0."
-			);
+			INFERNO_LOG_ERROR() << "scatter_add_slice: step cannot be 0." << std::endl;
 			exit(1);
 		}
 
@@ -266,7 +251,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal scatter_add_slice path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal scatter_add_slice path" << std::endl;
 				cpu_scatter_add_slice<AT>(optr, gptr, out.shape(), out.strides(), out.offset(), g_out.shape(), g_out.strides(), g_out.offset(), g_out.numel(), axis, start, step);
 
 				break;
@@ -275,12 +260,12 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal scatter_add_slice path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal scatter_add_slice path" << std::endl;
 				cuda_scatter_add_slice<AT>(optr, gptr, out.shape(), out.strides(), out.offset(), g_out.shape(), g_out.strides(), g_out.offset(), g_out.numel(), axis, start, step);
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 

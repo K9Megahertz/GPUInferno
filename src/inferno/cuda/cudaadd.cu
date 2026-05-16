@@ -77,8 +77,7 @@ namespace Inferno {
         const size_t out_rank = out_shape.size();
 
         if (out_rank > MAX_DIMS) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR,
-                "cuda_add: out rank exceeds MAX_DIMS");
+            INFERNO_LOG_ERROR() << "cuda_add: out rank exceeds MAX_DIMS" << std::endl;
             exit(1);
         }
 
@@ -138,8 +137,7 @@ namespace Inferno {
             d_b_strides
             );
 
-        check_cuda(cudaGetLastError(), "cuda_add kernel launch failed");
-        check_cuda(cudaDeviceSynchronize(), "cuda_add kernel execution failed");
+        check_cuda(cudaGetLastError(), "cuda_add kernel launch failed");        
 
         check_cuda(cudaFree(d_a_padded), "cuda_add cudaFree d_a_padded failed");
         check_cuda(cudaFree(d_b_padded), "cuda_add cudaFree d_b_padded failed");

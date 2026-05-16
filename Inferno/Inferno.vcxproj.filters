@@ -198,9 +198,6 @@
     <ClCompile Include="..\src\inferno\util\idbroker.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\inferno\util\logger.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\inferno\util\nodetracker.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -209,6 +206,15 @@
     </ClCompile>
     <ClCompile Include="..\src\inferno\optim\adamw.cpp">
       <Filter>Source Files\optim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\inferno\util\timer.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\inferno\gradfn\flashattentionbackward.cpp">
+      <Filter>Source Files\gradfn</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\inferno\util\logging.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -353,9 +359,6 @@
     <ClInclude Include="..\src\inferno\gradfn\transposebackward.h">
       <Filter>Header Files\gradfn</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\inferno\modules\embedding.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\inferno\modules\embedding_kernels.h">
       <Filter>Header Files\modules</Filter>
     </ClInclude>
@@ -377,9 +380,6 @@
     <ClInclude Include="..\src\inferno\util\idbroker.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\inferno\util\logger.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\inferno\util\nodetracker.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -388,6 +388,18 @@
     </ClInclude>
     <ClInclude Include="..\include\inferno\modules\module.h">
       <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\inferno\util\timer.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\inferno\gradfn\flashattentionbackward.h">
+      <Filter>Header Files\gradfn</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\inferno\util\logging.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\inferno\util\logging_internal.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -461,6 +473,9 @@
       <Filter>Source Files\cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\inferno\cuda\cudaadamwstep.cu">
+      <Filter>Source Files\cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\inferno\cuda\cudaflashattention.cu">
       <Filter>Source Files\cuda</Filter>
     </CudaCompile>
   </ItemGroup>

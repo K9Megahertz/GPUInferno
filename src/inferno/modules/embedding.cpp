@@ -83,7 +83,7 @@ namespace Inferno {
         out.strides() = out.calculate_strides(out.shape());
 
         if ((Inferno::grad_enabled) && (m_embeddings.requires_grad())) {
-            Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Embedding - Making an EmbeddingBackward node");
+            INFERNO_LOG_DEBUG() << "Embedding - Making an EmbeddingBackward node";
             GetImpl(out)->gradfn() = std::make_shared<EmbeddingBackward>(m_embeddings, token_ids_view);
         }
 
@@ -132,7 +132,7 @@ namespace Inferno {
                     // CPU Code Path
                     ////////////////////////////////////////////////////
                 case DeviceType::CPU:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal embedding path");
+                    INFERNO_LOG_DEBUG() << "CPU Code path - Using normal embedding path";
                     cpu_embedding<AT,BT>(tptr, eptr, optr, num_batches, seq_len, embed_dim);
                     break;
 
@@ -140,12 +140,12 @@ namespace Inferno {
                     // CUDA Code Path
                     ////////////////////////////////////////////////////
                 case DeviceType::CUDA:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal embedding path");
+                    INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal embedding path";
                     cuda_embedding<AT, BT>(tptr, eptr, optr, num_batches, seq_len, embed_dim);
                     break;
 
                 default:
-                    Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+                    INFERNO_LOG_ERROR() << "Invalid device type";
                     exit(1);
                 }
 

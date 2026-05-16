@@ -46,7 +46,19 @@ namespace Inferno {
 
 		NoGradGuard guard;
 
+		if (m_dim != m_A.shape().back()) {
+			INFERNO_LOG_ERROR() << "LayerNorm currently only supports last-dim normalization";
+			std::exit(1);
+		}
+
+		
+
 		Tensor g_out = Engine::grad_in(this, 0); // same shape as input
+
+		if (g_out.dtype() != m_A.dtype()) {
+			INFERNO_LOG_ERROR() << "LayerNormBackward expects g_out dtype == input dtype";
+			std::exit(1);
+		}
 
 		const size_t num_batches = std::accumulate(
 			m_A.shape().begin(),
@@ -81,7 +93,7 @@ namespace Inferno {
 				// CPU Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CPU:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CPU Code path - Using normal layernorm_backward path");
+				INFERNO_LOG_DEBUG() << "CPU Code path - Using normal layernorm_backward path" << std::endl;
 				cpu_layernorm_backward<AT,RT>(
 					aptr,
 					goutptr,
@@ -100,7 +112,7 @@ namespace Inferno {
 				// CUDA Code Path
 				////////////////////////////////////////////////////
 			case DeviceType::CUDA:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "CUDA Code path - Using normal layernorm_backward path");
+				INFERNO_LOG_DEBUG() << "CUDA Code path - Using normal layernorm_backward path" << std::endl;
 				cuda_layernorm_backward<AT, RT>(
 					aptr,
 					goutptr,
@@ -116,7 +128,7 @@ namespace Inferno {
 				break;
 
 			default:
-				Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "Invalid device type");
+				INFERNO_LOG_ERROR() << "Invalid device type" << std::endl;
 				exit(1);
 			}
 

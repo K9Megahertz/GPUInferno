@@ -1,5 +1,6 @@
 #include "engine.h"
 #include <unordered_set>
+#include <inferno/util/timer.h>
 
 namespace Inferno {
 
@@ -32,7 +33,7 @@ namespace Inferno {
 	void Engine::backward(const Tensor& tensor) {
 
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** running backward ***********");
+		INFERNO_LOG_DEBUG() << "*********** running backward ***********" << std::endl;
 
 		std::unordered_set<Node*> visited;
 		std::vector<Node*> topo;
@@ -40,7 +41,7 @@ namespace Inferno {
 
 		std::shared_ptr<Node> root = GetImpl(tensor)->grad_edge();
 		if (!root) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_ERROR, "*********** didnt find a root ***********");
+			INFERNO_LOG_ERROR() << "*********** didnt find a root ***********" << std::endl;
 			exit(1);
 		}
 
@@ -48,32 +49,39 @@ namespace Inferno {
 		s_grad_map = &grad_map;
 
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** building topo ***********");
+		INFERNO_LOG_DEBUG() << "*********** building topo ***********" << std::endl;
 		build_topo(root, visited, topo);
 
 		if (topo.empty())
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** topo  was empty ***********");
+			INFERNO_LOG_DEBUG() << "*********** topo  was empty ***********" << std::endl;
 		else
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Built topo with size: " + std::to_string(topo.size()));
+			INFERNO_LOG_DEBUG() << "Built topo with size: " << std::to_string(topo.size()) << std::endl;
 
 		Tensor seed = Tensor::ones_like(tensor);
 			accumulate(root.get(), 0, seed);
 
 
-		Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "*********** starting backward iterations ***********");
+		INFERNO_LOG_DEBUG() << "*********** starting backward iterations ***********" << std::endl;
 
 		//loop through all of the nodes and call the backward function
 		//these should all be in progressive order from back to front now
 		int count = 0;
+		Timer t1("Engine");
 		for (auto it = topo.rbegin(); it != topo.rend(); it++) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Engine backward step: " + (*it)->name());
-			(*it)->backward();  // Perform the gradient accumulation for the current node							
+			INFERNO_LOG_DEBUG() << "Engine backward step: " << (*it)->name() << std::endl;			
+			t1.start();
+			(*it)->backward();  // Perform the gradient accumulation for the current node
+			cudaDeviceSynchronize(); 
+			t1.stop();
+			INFERNO_LOG_DEBUG() << "Engine backward step: " + (*it)->name() << " took: " << t1.elapsed_ms() << " ms." << std::endl;
+			
+
 			count++;
 		}
 
 
 		for (auto it = topo.begin(); it != topo.end(); it++) {
-			Logger::Append(Logger::LogLevel::LOGLEVEL_DEBUG, "Engine releasing: " + (*it)->name());
+			INFERNO_LOG_DEBUG() << "Engine releasing: " << (*it)->name() << std::endl;
 			(*it)->release();
 		}
 

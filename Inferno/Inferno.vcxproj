@@ -35,6 +35,7 @@
     <ClCompile Include="..\src\inferno\gradfn\crossentropylossbackward.cpp" />
     <ClCompile Include="..\src\inferno\gradfn\dividebackward.cpp" />
     <ClCompile Include="..\src\inferno\gradfn\embeddingbackward.cpp" />
+    <ClCompile Include="..\src\inferno\gradfn\flashattentionbackward.cpp" />
     <ClCompile Include="..\src\inferno\gradfn\gelubackward.cpp" />
     <ClCompile Include="..\src\inferno\gradfn\layernormbackward.cpp" />
     <ClCompile Include="..\src\inferno\gradfn\mmbackward.cpp" />
@@ -59,9 +60,10 @@
     <ClCompile Include="..\src\inferno\storage\cpustorage.cpp" />
     <ClCompile Include="..\src\inferno\storage\cudastorage.cpp" />
     <ClCompile Include="..\src\inferno\util\idbroker.cpp" />
-    <ClCompile Include="..\src\inferno\util\logger.cpp" />
+    <ClCompile Include="..\src\inferno\util\logging.cpp" />
     <ClCompile Include="..\src\inferno\util\nodetracker.cpp" />
     <ClCompile Include="..\src\inferno\util\random.cpp" />
+    <ClCompile Include="..\src\inferno\util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\inferno\checkpoint\checkpoint.h" />
@@ -80,6 +82,7 @@
     <ClInclude Include="..\include\inferno\modules\module.h" />
     <ClInclude Include="..\include\inferno\optim\adamw.h" />
     <ClInclude Include="..\include\inferno\optim\sgd.h" />
+    <ClInclude Include="..\include\inferno\util\logging.h" />
     <ClInclude Include="..\include\inferno\util\random.h" />
     <ClInclude Include="..\src\inferno\core\broadcastops.h" />
     <ClInclude Include="..\src\inferno\core\cpuops.h" />
@@ -100,6 +103,7 @@
     <ClInclude Include="..\src\inferno\gradfn\crossentropylossbackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\dividebackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\embeddingbackward.h" />
+    <ClInclude Include="..\src\inferno\gradfn\flashattentionbackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\gelubackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\layernormbackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\mmbackward.h" />
@@ -114,15 +118,15 @@
     <ClInclude Include="..\src\inferno\gradfn\softmaxbackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\subtractbackward.h" />
     <ClInclude Include="..\src\inferno\gradfn\transposebackward.h" />
-    <ClInclude Include="..\src\inferno\modules\embedding.h" />
     <ClInclude Include="..\src\inferno\modules\embedding_kernels.h" />
     <ClInclude Include="..\src\inferno\modules\layernorm_kernels.h" />
     <ClInclude Include="..\src\inferno\storage\cpustorage.h" />
     <ClInclude Include="..\src\inferno\storage\cudastorage.h" />
     <ClInclude Include="..\src\inferno\storage\storage.h" />
     <ClInclude Include="..\src\inferno\util\idbroker.h" />
-    <ClInclude Include="..\src\inferno\util\logger.h" />
+    <ClInclude Include="..\src\inferno\util\logging_internal.h" />
     <ClInclude Include="..\src\inferno\util\nodetracker.h" />
+    <ClInclude Include="..\src\inferno\util\timer.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\inferno\cuda\cudaadamwstep.cu" />
@@ -133,6 +137,7 @@
     <CudaCompile Include="..\src\inferno\cuda\cudadivide.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudaembedding.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudafilltensor.cu" />
+    <CudaCompile Include="..\src\inferno\cuda\cudaflashattention.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudagelu.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudalayernorm.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudamaskedfill.cu" />
@@ -149,6 +154,11 @@
     <CudaCompile Include="..\src\inferno\cuda\cudasubtract.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudasumtoshape.cu" />
     <CudaCompile Include="..\src\inferno\cuda\cudatri.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Logger\Logger.vcxproj">
+      <Project>{d5809b03-f5e9-4c83-bd2c-b43b0e568978}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -266,7 +276,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <CudaCompile>
-      <CodeGeneration>compute_89,sm_89</CodeGeneration>
+      <CodeGeneration>compute_61,sm_61;compute_89,sm_89</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -288,7 +298,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <CudaCompile>
-      <CodeGeneration>compute_89,sm_89</CodeGeneration>
+      <CodeGeneration>compute_61,sm_61;compute_89,sm_89</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
